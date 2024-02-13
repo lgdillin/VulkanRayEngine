@@ -1,11 +1,29 @@
 #include "View.hpp"
 
 View::View() {
-	m_window = nullptr;
-	m_surface = nullptr;
+	m_debugCallback = nullptr;
+
 	m_instance = nullptr;
+	m_surface = nullptr;
 
+	m_physicalDevice = nullptr;
+	m_graphics_queueFamilyIndex = 0;
+	m_present_queueFamilyIndex = 0;
 
+	m_logicalDevice = nullptr;
+	m_graphicsQueue = nullptr;
+	m_presentQueue = nullptr;
+
+	m_window = nullptr;
+	m_swapchain = nullptr;
+	//m_surfaceCapabilities = nullptr;
+	//m_surfaceFormat = NULL;
+
+	//m_swapchainSize = nullptr;
+	m_swapchainImages = {};
+	m_swapchainImageCount = 0;
+
+	m_swapchainImageViews = {};
 }
 
 View::~View() {
@@ -16,6 +34,19 @@ View::~View() {
 	}
 	vkDestroyInstance(m_instance, nullptr);
 	SDL_DestroyWindow(m_window);
+}
+
+void View::acquireNextImage() {
+	vkAcquireNextImageKHR(
+		m_logicalDevice,
+		m_swapchain,
+		UINT64_MAX,
+		m_imageAvailableSemaphore,
+		VK_NULL_HANDLE,
+		&m_frameIndex
+	);
+	vkWaitForFences(m_logicalDevice, 1, &m_fences[m_frameIndex],
+		VK_FALSE, UINT64_MAX);
 }
 
 void View::initialize() {
@@ -31,6 +62,16 @@ void View::initialize() {
 
 	// screen
 	createSwapchain();
+	createImageViews();
+	setupDepthStencil();
+	createRenderpass();
+	createFramebuffer();
+
+	// command
+	createCommandPool();
+	createCommandBuffers();
+	createSemaphores();
+	createFences();
 }
 
 /// <summary>
@@ -352,6 +393,142 @@ void View::setupDepthStencil() {
 	);
 
 	m_depthImageView = createImageView(m_depthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
+}
+
+void View::createRenderpass() {
+	std::vector<VkAttachmentDescription> attachments(2);
+
+	attachments[0].format = m_surfaceFormat.format;
+	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	attachments[1].format = m_depthFormat;
+	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference colorReference = {};
+	colorReference.attachment = 0;
+	colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depthReference = {};
+	depthReference.attachment = 1;
+	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpassDescription = {};
+	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDescription.colorAttachmentCount = 1;
+	subpassDescription.pColorAttachments = &colorReference;
+	subpassDescription.pDepthStencilAttachment = &depthReference;
+	subpassDescription.inputAttachmentCount = 0;
+	subpassDescription.pInputAttachments = nullptr;
+	subpassDescription.preserveAttachmentCount = 0;
+	subpassDescription.pPreserveAttachments = nullptr;
+	subpassDescription.pResolveAttachments = nullptr;
+
+	std::vector<VkSubpassDependency> dependencies(1);
+
+	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassInfo.pAttachments = attachments.data();
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpassDescription;
+	renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+	renderPassInfo.pDependencies = dependencies.data();
+
+	vkCreateRenderPass(m_logicalDevice, &renderPassInfo, nullptr, &m_renderpass);
+}
+
+void View::createFramebuffer() {
+	m_swapchainFramebuffers.resize(m_swapchainImageViews.size());
+
+	for (size_t i = 0; i < m_swapchainImageViews.size(); i++) {
+		std::vector<VkImageView> attachments(2);
+		attachments[0] = m_swapchainImageViews[i];
+		attachments[1] = m_depthImageView;
+
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = m_renderpass;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
+		framebufferInfo.width = m_swapchainSize.width;
+		framebufferInfo.height = m_swapchainSize.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(m_logicalDevice, &framebufferInfo, 
+			nullptr, &m_swapchainFramebuffers[i]) != VK_SUCCESS
+		) {
+			throw std::runtime_error("failed to create framebuffer!");
+		}
+	}
+}
+
+void View::createCommandPool() {
+	VkResult result;
+
+	VkCommandPoolCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+	createInfo.queueFamilyIndex = m_graphics_queueFamilyIndex;
+	vkCreateCommandPool(m_logicalDevice, &createInfo, nullptr, &m_commandPool);
+}
+
+void View::createCommandBuffers() {
+	VkResult result;
+
+	VkCommandBufferAllocateInfo allocateInfo = {};
+	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocateInfo.commandPool = m_commandPool;
+	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocateInfo.commandBufferCount = m_swapchainImageCount;
+
+	m_commandBuffers.resize(m_swapchainImageCount);
+	vkAllocateCommandBuffers(m_logicalDevice, &allocateInfo, m_commandBuffers.data());
+}
+
+void View::createSemaphores() {
+	createSemaphore(&m_imageAvailableSemaphore);
+	createSemaphore(&m_renderingFinishedSemaphore);
+}
+
+void View::createSemaphore(VkSemaphore *_semaphore) {
+	VkResult result;
+
+	VkSemaphoreCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	vkCreateSemaphore(m_logicalDevice, &createInfo, nullptr, _semaphore);
+}
+
+void View::createFences() {
+	uint32_t i;
+	m_fences.resize(m_swapchainImageCount);
+	for (i = 0; i < m_swapchainImageCount; i++) {
+		VkResult result;
+
+		VkFenceCreateInfo createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		createInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+		vkCreateFence(m_logicalDevice, &createInfo, nullptr, &m_fences[i]);
+	}
 }
 
 void View::createImage(uint32_t _width, uint32_t _height, 

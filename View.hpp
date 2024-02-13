@@ -23,6 +23,15 @@ public:
 	View();
 	~View();
 
+	void acquireNextImage();
+	void resetCommandBuffer();
+	void beginCommandBuffer();
+	void endCommandBuffer();
+	void freeCommandBuffer();
+	void beginRenderpass();
+	void endRenderpass();
+	void queueSubmit();
+
 	void initialize();
 
 	// core
@@ -47,6 +56,7 @@ public:
 	void createCommandPool();
 	void createCommandBuffers();
 	void createSemaphores();
+	void createSemaphore(VkSemaphore *_semaphore);
 	void createFences();
 
 	// utility
@@ -103,12 +113,17 @@ private:
 	/////////////
 	VkCommandPool m_commandPool;
 
-	std::vector<VkCommandBuffer> commandBuffers;
+	std::vector<VkCommandBuffer> m_commandBuffers;
 
-	VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderingFinishedSemaphore;
+	VkSemaphore m_imageAvailableSemaphore;
+	VkSemaphore m_renderingFinishedSemaphore;
 
-	std::vector<VkFence> fences;
+	std::vector<VkFence> m_fences;
+
+	//
+	// other
+	//////////
+	uint32_t m_frameIndex;
 
 /// <summary>
 /// Debug/Callback utility functions
