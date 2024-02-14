@@ -6,13 +6,14 @@
 #include <SDL2/SDL_vulkan.h>
 #include <SDL2/SDL.h>
 
-
-#include "VkInit.hpp"
+#include "Game.hpp"
+#include "PipelineBuilder.hpp"
 
 #define CLAMP(x, lo, hi)    ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 
 constexpr int WIDTH = 800;
 constexpr int HEIGHT = 600;
+constexpr bool enableValidationLayers = true;
 constexpr std::array<const char *, 1> VALIDATION_LAYERS{
 	//"VK_LAYER_LUNARG_standard_validation"
 	"VK_LAYER_KHRONOS_validation"
@@ -20,18 +21,32 @@ constexpr std::array<const char *, 1> VALIDATION_LAYERS{
 
 class View {
 public:
-	View();
+	View(Game &_game);
 	~View();
+
+	// render loop
+	void repaint();
+
+	// render pipeline
+	void createPipeline();
+
+	// render pass
 
 	void acquireNextImage();
 	void resetCommandBuffer();
 	void beginCommandBuffer();
 	void endCommandBuffer();
 	void freeCommandBuffer();
-	void beginRenderpass();
+	void beginRenderpass(VkClearColorValue _clearColor, VkClearDepthStencilValue _clearDepthStencil);
 	void endRenderpass();
 	void queueSubmit();
+	void queuePresent();
+	void setViewport(int _width, int _height);
+	void setScissor(int _width, int _height);
 
+	//
+	// setup and initialization
+	//////////////////////////////////////
 	void initialize();
 
 	// core
@@ -59,6 +74,8 @@ public:
 	void createSemaphore(VkSemaphore *_semaphore);
 	void createFences();
 
+	// pipeline
+
 	// utility
 	void createImage(uint32_t _width, uint32_t _height, VkFormat _format,
 		VkImageTiling _tiling, VkImageUsageFlags _usage,
@@ -69,6 +86,12 @@ public:
 	SDL_Window *getWindow() { return m_window; }
 	VkInstance *getInstance(){ return &m_instance; }
 private:
+	// project
+	Game *m_game;
+	VkShaderModule m_vShader;
+	VkShaderModule m_fShader;
+
+	// vulkan
 	VkDebugReportCallbackEXT m_debugCallback;
 
 	VkInstance m_instance;
@@ -113,6 +136,7 @@ private:
 	/////////////
 	VkCommandPool m_commandPool;
 
+	VkCommandBuffer m_commandBuffer;
 	std::vector<VkCommandBuffer> m_commandBuffers;
 
 	VkSemaphore m_imageAvailableSemaphore;
@@ -121,10 +145,18 @@ private:
 	std::vector<VkFence> m_fences;
 
 	//
+	// pipeline
+	///////////////
+	PipelineBuilder m_pipelineBuilder;
+	VkPipeline m_pipeline;
+
+
+	//
 	// other
 	//////////
 	uint32_t m_frameIndex;
-
+	VkPipelineStageFlags m_waitDestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	VkImage m_image;
 /// <summary>
 /// Debug/Callback utility functions
 /// </summary>

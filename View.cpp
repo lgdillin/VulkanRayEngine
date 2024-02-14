@@ -1,6 +1,6 @@
 #include "View.hpp"
 
-View::View() {
+View::View(Game &_game) : m_game(&_game) {
 	m_debugCallback = nullptr;
 
 	m_instance = nullptr;
@@ -36,6 +36,74 @@ View::~View() {
 	SDL_DestroyWindow(m_window);
 }
 
+void View::repaint() {
+	acquireNextImage();
+	resetCommandBuffer();
+	beginCommandBuffer();
+
+	VkClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+	VkClearDepthStencilValue clearDepthStencil = { 1.0f, 0.0f };
+	beginRenderpass(clearColor, clearDepthStencil);
+
+	// render our stuff here
+	vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+	vkCmdDraw(m_commandBuffer, 3, 1, 0, 0);
+
+	endRenderpass();
+	endCommandBuffer();
+	queueSubmit();
+	queuePresent();
+}
+
+void View::createPipeline() {
+	m_pipelineBuilder.m_shaderStages.push_back(
+		m_pipelineBuilder.pipelineShaderStageCreateInfo(
+			VK_SHADER_STAGE_VERTEX_BIT,
+			m_vShader)
+	);
+
+	m_pipelineBuilder.m_shaderStages.push_back(
+		m_pipelineBuilder.pipelineShaderStageCreateInfo(
+			VK_SHADER_STAGE_FRAGMENT_BIT,
+			m_fShader
+		)
+	);
+
+	//vertex input controls how to read vertices from vertex buffers. We aren't using it yet
+	m_pipelineBuilder.m_vertexInputInfo = m_pipelineBuilder.vertexInputStateCreateInfo();
+
+	//input assembly is the configuration for drawing triangle lists, strips, or individual points.
+	//we are just going to draw triangle list
+	m_pipelineBuilder.m_inputAssembly = m_pipelineBuilder.inputAssemblyCreateInfo(
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+	//build viewport and scissor from the swapchain extents
+	m_pipelineBuilder.m_viewport.x = 0.0f;
+	m_pipelineBuilder.m_viewport.y = 0.0f;
+	m_pipelineBuilder.m_viewport.width = (float)m_swapchainSize.width;
+	m_pipelineBuilder.m_viewport.height = (float)m_swapchainSize.height;
+	m_pipelineBuilder.m_viewport.minDepth = 0.0f;
+	m_pipelineBuilder.m_viewport.maxDepth = 1.0f;
+
+	m_pipelineBuilder.m_scissor.offset = { 0, 0 };
+	m_pipelineBuilder.m_scissor.extent = m_swapchainSize;
+
+	//configure the rasterizer to draw filled triangles
+	m_pipelineBuilder.m_rasterizer = m_pipelineBuilder.rasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
+
+	//we don't use multisampling, so just run the default one
+	m_pipelineBuilder.m_multisampling = m_pipelineBuilder.multisamplingStateCreateInfo();
+
+	//a single blend attachment with no blending and writing to RGBA
+	m_pipelineBuilder.m_colorBlendAttachment = m_pipelineBuilder.colorBlendAttachmentState();
+
+	//use the triangle layout we created
+	m_pipelineBuilder.m_pipelineLayout = m_pipelineBuilder.m_pipelineLayout;
+
+	//finally build the pipeline
+	m_pipeline = m_pipelineBuilder.buildPipeline(m_logicalDevice, m_renderpass);
+}
+
 void View::acquireNextImage() {
 	vkAcquireNextImageKHR(
 		m_logicalDevice,
@@ -47,6 +115,98 @@ void View::acquireNextImage() {
 	);
 	vkWaitForFences(m_logicalDevice, 1, &m_fences[m_frameIndex],
 		VK_FALSE, UINT64_MAX);
+	vkResetFences(m_logicalDevice, 1, &m_fences[m_frameIndex]);
+
+	m_commandBuffer = m_commandBuffers[m_frameIndex];
+	m_image = m_swapchainImages[m_frameIndex];
+}
+
+void View::resetCommandBuffer() {
+	vkResetCommandBuffer(m_commandBuffer, 0);
+}
+
+void View::beginCommandBuffer() {
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+	vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
+}
+
+void View::endCommandBuffer() {
+	vkEndCommandBuffer(m_commandBuffer);
+}
+
+void View::freeCommandBuffer() {
+	vkFreeCommandBuffers(m_logicalDevice, m_commandPool, 1, &m_commandBuffer);
+}
+
+void View::beginRenderpass(VkClearColorValue _clearColor, VkClearDepthStencilValue _clearDepthStencil) {
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = m_renderpass; 
+	renderPassInfo.framebuffer = m_swapchainFramebuffers[m_frameIndex];
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = m_swapchainSize;
+	renderPassInfo.clearValueCount = 1;
+
+	std::vector<VkClearValue> clearValues(2);
+	clearValues[0].color = _clearColor;
+	clearValues[1].depthStencil = _clearDepthStencil;
+
+	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
+
+	vkCmdBeginRenderPass(m_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void View::endRenderpass() {
+	vkCmdEndRenderPass(m_commandBuffer);
+}
+
+void View::queueSubmit() {
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = &m_imageAvailableSemaphore;
+	submitInfo.pWaitDstStageMask = &m_waitDestStageMask;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &m_commandBuffer;
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = &m_renderingFinishedSemaphore;
+	vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_fences[m_frameIndex]);
+}
+
+void View::queuePresent() {
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &m_renderingFinishedSemaphore;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &m_swapchain;
+	presentInfo.pImageIndices = &m_frameIndex;
+	vkQueuePresentKHR(m_presentQueue, &presentInfo);
+
+	vkQueueWaitIdle(m_presentQueue);
+}
+
+void View::setViewport(int _width, int _height) {
+	VkViewport viewport;
+	viewport.width = (float)_width / 2;
+	viewport.height = (float)_height;
+	viewport.minDepth = (float)0.0f;
+	viewport.maxDepth = (float)1.0f;
+	viewport.x = 0;
+	viewport.y = 0;
+	vkCmdSetViewport(m_commandBuffer, 0, 1, &viewport);
+}
+
+void View::setScissor(int _width, int _height) {
+	VkRect2D scissor;
+	scissor.extent.width = _width / 2;
+	scissor.extent.height = _height;
+	scissor.offset.x = 0;
+	scissor.offset.y = 0;
+	vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
 }
 
 void View::initialize() {
@@ -72,6 +232,11 @@ void View::initialize() {
 	createCommandBuffers();
 	createSemaphores();
 	createFences();
+
+	m_game->m_device = &m_logicalDevice;
+	m_vShader = shader::createModule("./shader1v.spv", m_logicalDevice);
+	m_fShader = shader::createModule("./shader1f.spv", m_logicalDevice);
+	createPipeline();
 }
 
 /// <summary>

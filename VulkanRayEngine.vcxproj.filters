@@ -24,9 +24,18 @@
     <ClCompile Include="Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Controller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="exampleRenderLoop.md">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shader1.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shader1.vert">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -38,6 +47,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VkInit.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Triangle.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineBuilder.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Controller.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

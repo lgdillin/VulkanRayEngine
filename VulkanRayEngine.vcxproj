@@ -135,15 +135,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Controller.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="View.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exampleRenderLoop.md" />
+    <None Include="shader1.frag" />
+    <None Include="shader1.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Controller.hpp" />
     <ClInclude Include="Game.hpp" />
+    <ClInclude Include="PipelineBuilder.hpp" />
+    <ClInclude Include="Shader.hpp" />
+    <ClInclude Include="Triangle.hpp" />
     <ClInclude Include="View.hpp" />
     <ClInclude Include="VkInit.hpp" />
   </ItemGroup>

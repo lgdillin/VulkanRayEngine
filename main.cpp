@@ -38,9 +38,10 @@ int main(int argc, char *argv[]) {
 	// Init MVC
 	Game game;
 
-	View view;
+	View view(game);
 	view.initialize();
 
+	game.initialize();
 	//instance::createInstance(view.getWindow(), *view.getInstance());
 
 	glm::mat4 matrix(1);
@@ -55,7 +56,7 @@ int main(int argc, char *argv[]) {
 		frameStart = SDL_GetTicks();
 
 		// updating
-
+		view.repaint();
 
 		calculateFPS(&view);
 	}
