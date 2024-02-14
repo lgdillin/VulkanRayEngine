@@ -1,6 +1,8 @@
 #include "View.hpp"
 
-View::View(Game &_game) : m_game(&_game) {
+View::View(Game &_game, Controller &_controller) 
+	: m_game(&_game), m_controller(&_controller
+) {
 	m_debugCallback = nullptr;
 
 	m_instance = nullptr;

@@ -11,6 +11,8 @@ public:
 
 	void initialize();
 
+	void update();
+
 	void setDevice(VkDevice &_device) { m_device = &_device; }
 
 	VkDevice *m_device;

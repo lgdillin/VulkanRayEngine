@@ -7,6 +7,7 @@
 #include <SDL2/SDL.h>
 
 #include "Game.hpp"
+#include "Controller.hpp"
 #include "PipelineBuilder.hpp"
 
 #define CLAMP(x, lo, hi)    ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
@@ -21,7 +22,7 @@ constexpr std::array<const char *, 1> VALIDATION_LAYERS{
 
 class View {
 public:
-	View(Game &_game);
+	View(Game &_game, Controller &_controller);
 	~View();
 
 	// render loop
@@ -85,9 +86,14 @@ public:
 
 	SDL_Window *getWindow() { return m_window; }
 	VkInstance *getInstance(){ return &m_instance; }
+
+	// project
+	int m_shaderMode;
+
 private:
 	// project
 	Game *m_game;
+	Controller *m_controller;
 	VkShaderModule m_vShader;
 	VkShaderModule m_fShader;
 
@@ -149,7 +155,7 @@ private:
 	///////////////
 	PipelineBuilder m_pipelineBuilder;
 	VkPipeline m_pipeline;
-
+	VkPipeline m_pipeline2;
 
 	//
 	// other

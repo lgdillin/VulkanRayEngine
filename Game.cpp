@@ -11,3 +11,7 @@ void Game::initialize() {
 	Triangle t(*m_device);
 	m_triangles.push_back(t);
 }
+
+void Game::update() {
+	// update the data model
+}

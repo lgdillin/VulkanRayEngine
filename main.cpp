@@ -11,7 +11,7 @@
 
 #include "Game.hpp"
 #include "View.hpp"
-#include "VkInit.hpp"
+#include "Controller.hpp"
 
 
 std::chrono::steady_clock::time_point frameStart, frameEnd;
@@ -38,15 +38,14 @@ int main(int argc, char *argv[]) {
 	// Init MVC
 	Game game;
 
-	View view(game);
+	Controller controller(game);
+
+	View view(game, controller);
 	view.initialize();
 
-	game.initialize();
-	//instance::createInstance(view.getWindow(), *view.getInstance());
+	controller.setView(view);
 
-	glm::mat4 matrix(1);
-	glm::vec4 vec(1);
-	auto test = matrix * vec;
+	game.initialize();
 
 	bool quit = false;
 	Uint32 frameStart;
@@ -54,6 +53,10 @@ int main(int argc, char *argv[]) {
 	const int frameDelay = 1000 / targetFramerate;
 	while (!quit) {
 		frameStart = SDL_GetTicks();
+
+		controller.update();
+
+		game.update();
 
 		// updating
 		view.repaint();

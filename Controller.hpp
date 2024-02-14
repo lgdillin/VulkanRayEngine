@@ -8,6 +8,7 @@ class Controller {
 public:
 	Controller(Game &_game);
 	~Controller();
+	void setView(View &_view) { m_view = &_view; }
 
 	void initialize() {}
 
@@ -19,5 +20,5 @@ public:
 private:
 
 	Game *m_game;
-
+	View *m_view;
 };
