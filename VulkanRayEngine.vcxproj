@@ -139,6 +139,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="View.cpp" />
+    <ClCompile Include="View_old.cpp" />
     <ClCompile Include="VkBoostrap.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +157,7 @@
     <ClInclude Include="Structs.hpp" />
     <ClInclude Include="Triangle.hpp" />
     <ClInclude Include="View.hpp" />
+    <ClInclude Include="View_old.hpp" />
     <ClInclude Include="VkBoostrapDispatch.h" />
     <ClInclude Include="VkBootsrap.h" />
     <ClInclude Include="VkInit.hpp" />
