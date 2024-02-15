@@ -5,10 +5,12 @@
 #include <vulkan/vulkan.hpp>
 #include <SDL2/SDL_vulkan.h>
 #include <SDL2/SDL.h>
+#include "VkBootsrap.h"
 
 #include "Game.hpp"
-#include "Controller.hpp"
+//#include "Controller.hpp"
 #include "PipelineBuilder.hpp"
+#include "Structs.hpp"
 
 #define CLAMP(x, lo, hi)    ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 
@@ -22,14 +24,17 @@ constexpr std::array<const char *, 1> VALIDATION_LAYERS{
 
 class View {
 public:
-	View(Game &_game, Controller &_controller);
+	//View(Game &_game, Controller &_controller);
+	View(Game &_game);
 	~View();
 
 	// render loop
 	void repaint();
 
+	void initialize();
+
 	// render pipeline
-	void createPipeline();
+	void createPipeline(VkPipeline &_pipeline, int _mode);
 
 	// render pass
 
@@ -48,7 +53,6 @@ public:
 	//
 	// setup and initialization
 	//////////////////////////////////////
-	void initialize();
 
 	// core
 	void initSDL();
@@ -75,7 +79,9 @@ public:
 	void createSemaphore(VkSemaphore *_semaphore);
 	void createFences();
 
-	// pipeline
+	// cleanup
+	void cleanup();
+	DeletionQueue m_deletionQueue;
 
 	// utility
 	void createImage(uint32_t _width, uint32_t _height, VkFormat _format,
@@ -84,6 +90,8 @@ public:
 		VkDeviceMemory &_imageMemory);
 	uint32_t findMemoryByType(uint32_t _typeFilter, VkMemoryPropertyFlags _props);
 
+
+	/////////////////////////////////////////
 	SDL_Window *getWindow() { return m_window; }
 	VkInstance *getInstance(){ return &m_instance; }
 
@@ -93,8 +101,9 @@ public:
 private:
 	// project
 	Game *m_game;
-	Controller *m_controller;
+	//Controller *m_controller;
 	VkShaderModule m_vShader;
+	VkShaderModule m_vShader2;
 	VkShaderModule m_fShader;
 
 	// vulkan

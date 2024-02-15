@@ -1,7 +1,7 @@
 #include "View.hpp"
 
-View::View(Game &_game, Controller &_controller) 
-	: m_game(&_game), m_controller(&_controller
+View::View(Game &_game) 
+	: m_game(&_game
 ) {
 	m_debugCallback = nullptr;
 
@@ -26,6 +26,8 @@ View::View(Game &_game, Controller &_controller)
 	m_swapchainImageCount = 0;
 
 	m_swapchainImageViews = {};
+
+	m_shaderMode = 0;
 }
 
 View::~View() {
@@ -48,8 +50,15 @@ void View::repaint() {
 	beginRenderpass(clearColor, clearDepthStencil);
 
 	// render our stuff here
-	vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-	vkCmdDraw(m_commandBuffer, 3, 1, 0, 0);
+	if (m_shaderMode == 0) {
+		vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
+			m_pipeline);
+		vkCmdDraw(m_commandBuffer, 3, 1, 0, 0);
+	} else {
+		vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
+			m_pipeline2);
+		vkCmdDraw(m_commandBuffer, 3, 1, 0, 0);
+	}
 
 	endRenderpass();
 	endCommandBuffer();
@@ -57,12 +66,53 @@ void View::repaint() {
 	queuePresent();
 }
 
-void View::createPipeline() {
-	m_pipelineBuilder.m_shaderStages.push_back(
-		m_pipelineBuilder.pipelineShaderStageCreateInfo(
-			VK_SHADER_STAGE_VERTEX_BIT,
-			m_vShader)
-	);
+void View::initialize() {
+	// core
+	initSDL();
+	createWindow();
+	createInstance();
+	createDebug();
+	createSurface();
+	selectPhysicalDevice();
+	selectQueueFamily();
+	createDevice();
+
+	// screen
+	createSwapchain();
+	createImageViews();
+	setupDepthStencil();
+	createRenderpass();
+	createFramebuffer();
+
+	// command
+	createCommandPool();
+	createCommandBuffers();
+	createSemaphores();
+	createFences();
+
+	m_game->m_device = &m_logicalDevice;
+	m_vShader = shader::createModule("./shader1v.spv", m_logicalDevice);
+	m_vShader2 = shader::createModule("./shader1_2v.spv", m_logicalDevice);
+	m_fShader = shader::createModule("./shader1f.spv", m_logicalDevice);
+	createPipeline(m_pipeline, 0);
+	createPipeline(m_pipeline2, 1);
+}
+
+void View::createPipeline(VkPipeline &_pipeline, int _mode) {
+
+	if (_mode == 0) {
+		m_pipelineBuilder.m_shaderStages.push_back(
+			m_pipelineBuilder.pipelineShaderStageCreateInfo(
+				VK_SHADER_STAGE_VERTEX_BIT,
+				m_vShader)
+		);
+	} else {
+		m_pipelineBuilder.m_shaderStages.push_back(
+			m_pipelineBuilder.pipelineShaderStageCreateInfo(
+				VK_SHADER_STAGE_VERTEX_BIT,
+				m_vShader2)
+		);
+	}
 
 	m_pipelineBuilder.m_shaderStages.push_back(
 		m_pipelineBuilder.pipelineShaderStageCreateInfo(
@@ -103,7 +153,7 @@ void View::createPipeline() {
 	m_pipelineBuilder.m_pipelineLayout = m_pipelineBuilder.m_pipelineLayout;
 
 	//finally build the pipeline
-	m_pipeline = m_pipelineBuilder.buildPipeline(m_logicalDevice, m_renderpass);
+	_pipeline = m_pipelineBuilder.buildPipeline(m_logicalDevice, m_renderpass);
 }
 
 void View::acquireNextImage() {
@@ -211,35 +261,7 @@ void View::setScissor(int _width, int _height) {
 	vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
 }
 
-void View::initialize() {
-	// core
-	initSDL();
-	createWindow();
-	createInstance();
-	createDebug();
-	createSurface();
-	selectPhysicalDevice();
-	selectQueueFamily();
-	createDevice();
 
-	// screen
-	createSwapchain();
-	createImageViews();
-	setupDepthStencil();
-	createRenderpass();
-	createFramebuffer();
-
-	// command
-	createCommandPool();
-	createCommandBuffers();
-	createSemaphores();
-	createFences();
-
-	m_game->m_device = &m_logicalDevice;
-	m_vShader = shader::createModule("./shader1v.spv", m_logicalDevice);
-	m_fShader = shader::createModule("./shader1f.spv", m_logicalDevice);
-	createPipeline();
-}
 
 /// <summary>
 /// Initialize SDL and load the SDL/Vulkan libraries
@@ -696,6 +718,18 @@ void View::createFences() {
 		createInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 		vkCreateFence(m_logicalDevice, &createInfo, nullptr, &m_fences[i]);
 	}
+}
+
+void View::cleanup() {
+	vkWaitForFences(m_logicalDevice, 1, &m_fences[m_frameIndex], true, 1000000000);
+
+	m_deletionQueue.flush();
+
+	vkDestroyDevice(m_logicalDevice, nullptr);
+	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+	vkb::destroy_debug_utils_messenger(m_instance, nullptr);
+	vkDestroyInstance(m_instance, nullptr);
+	SDL_DestroyWindow(m_window);
 }
 
 void View::createImage(uint32_t _width, uint32_t _height, 

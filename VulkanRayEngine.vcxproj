@@ -139,19 +139,25 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="View.cpp" />
+    <ClCompile Include="VkBoostrap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exampleRenderLoop.md" />
     <None Include="shader1.frag" />
     <None Include="shader1.vert" />
+    <None Include="shader1_2.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller.hpp" />
     <ClInclude Include="Game.hpp" />
+    <ClInclude Include="Headers.hpp" />
     <ClInclude Include="PipelineBuilder.hpp" />
     <ClInclude Include="Shader.hpp" />
+    <ClInclude Include="Structs.hpp" />
     <ClInclude Include="Triangle.hpp" />
     <ClInclude Include="View.hpp" />
+    <ClInclude Include="VkBoostrapDispatch.h" />
+    <ClInclude Include="VkBootsrap.h" />
     <ClInclude Include="VkInit.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

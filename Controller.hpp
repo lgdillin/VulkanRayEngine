@@ -1,7 +1,10 @@
 #pragma once
 
+class View; // forward declaration to break circular dependency
+
 #include <SDL2/SDL.h>
 
+#include "View.hpp"
 #include "Game.hpp"
 
 class Controller {

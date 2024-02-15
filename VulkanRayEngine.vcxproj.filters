@@ -27,6 +27,9 @@
     <ClCompile Include="Controller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VkBoostrap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="exampleRenderLoop.md">
@@ -36,6 +39,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="shader1.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shader1_2.vert">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -59,6 +65,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Controller.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Structs.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VkBootsrap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VkBoostrapDispatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

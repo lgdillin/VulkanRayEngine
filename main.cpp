@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 
 	Controller controller(game);
 
-	View view(game, controller);
+	View view(game);
 	view.initialize();
 
 	controller.setView(view);
