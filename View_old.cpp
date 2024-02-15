@@ -784,3 +784,4 @@ uint32_t View::findMemoryByType(uint32_t _typeFilter, VkMemoryPropertyFlags _pro
 
 	throw std::runtime_error("failed to find suitable memory type!");
 }
+*/

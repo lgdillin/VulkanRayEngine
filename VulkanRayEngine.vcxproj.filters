@@ -55,7 +55,7 @@
     <ClInclude Include="Game.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VkInit.hpp">
+    <ClInclude Include="VkFuncs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Shader.hpp">
@@ -70,19 +70,19 @@
     <ClInclude Include="Controller.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Headers.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Structs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VkBootsrap.h">
+    <ClInclude Include="VkBootstrap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VkBoostrapDispatch.h">
+    <ClInclude Include="VkBootstrapDispatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="View.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoSettings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

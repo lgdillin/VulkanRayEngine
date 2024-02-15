@@ -151,16 +151,16 @@
   <ItemGroup>
     <ClInclude Include="Controller.hpp" />
     <ClInclude Include="Game.hpp" />
-    <ClInclude Include="Headers.hpp" />
     <ClInclude Include="PipelineBuilder.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Structs.hpp" />
     <ClInclude Include="Triangle.hpp" />
+    <ClInclude Include="VideoSettings.hpp" />
     <ClInclude Include="View.hpp" />
     <ClInclude Include="View_old.hpp" />
-    <ClInclude Include="VkBoostrapDispatch.h" />
-    <ClInclude Include="VkBootsrap.h" />
-    <ClInclude Include="VkInit.hpp" />
+    <ClInclude Include="VkBootstrapDispatch.h" />
+    <ClInclude Include="VkBootstrap.h" />
+    <ClInclude Include="VkFuncs.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
