@@ -151,6 +151,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="exampleRenderLoop.md" />
+    <None Include="gradient_color.comp" />
     <None Include="shader1.frag" />
     <None Include="shader1.vert" />
     <None Include="shader1_2.vert" />

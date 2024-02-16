@@ -19,6 +19,9 @@ void View::draw() {
 	VK_CHECK(vkWaitForFences(m_device, 1, &getCurrentFrame().renderFence, 
 		true, 1000000000));
 
+	VK_CHECK(vkWaitForFences(m_device, 1, &getCurrentFrame().renderFence,
+		true, 1000000000));
+
 	// swap this line out for the deletion queue
 	VK_CHECK(vkResetFences(m_device, 1, &getCurrentFrame().renderFence));
 	getCurrentFrame().deletionQueue.flush();
@@ -65,6 +68,12 @@ void View::draw() {
 	// set swapchain image layout to Present so we can show it on the screen
 	vkutil::transitionImage(cmd, m_swapchainImages[swapchainImageIndex], 
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+	drawImgui(cmd, m_swapchainImageViews[swapchainImageIndex]);
+
+	// set swapchain image layout to Present so we can draw it
+	vkutil::transitionImage(cmd, m_swapchainImages[swapchainImageIndex], 
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 	//finalize the command buffer (we can no longer add commands, but it can now be executed)
 	VK_CHECK(vkEndCommandBuffer(cmd));
@@ -121,12 +130,20 @@ void View::drawBackground() {
 	VkCommandBuffer cmd = getCurrentFrame().commandBuffer;
 	//vkCmdClearColorImage(cmd, m_drawImage.image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
 
+	ComputeEffect &effect = m_backgroundEffects[m_currentBackgroundEffect];
 	// bind the gradient drawing compute pipeline
-	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_gradientPipeline);
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, effect.pipeline);
 
 	// bind the descriptor set containing the draw image for the compute pipeline
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, 
 		m_gradientPipelineLayout, 0, 1, &m_drawImageDescriptors, 0, nullptr);
+
+	ComputePushConstants pc;
+	pc.data1 = glm::vec4(1, 0, 0, 1);
+	pc.data2 = glm::vec4(0, 0, 0, 1);
+
+	vkCmdPushConstants(cmd, m_gradientPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 
+		0, sizeof(ComputePushConstants), &effect.data);
 
 	// execute the compute pipeline dispatch. We are using 16x16 workgroup size so we need to divide by it
 	vkCmdDispatch(cmd, std::ceil(m_drawExtent.width / 16.0), 
@@ -335,20 +352,22 @@ void View::initCommands() {
 	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::commandBufferAllocateInfo(
 		m_immCommandPool, 1);
 
+	VK_CHECK(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_immCommandBuffer));
+
 	m_deletionQueue.push_function([=]() {
 		vkDestroyCommandPool(m_device, m_immCommandPool, nullptr);
 	});
 
-	//for (int i = 0; i < FRAME_OVERLAP; i++) {
+	for (int i = 0; i < FRAME_OVERLAP; i++) {
 
-	//	VK_CHECK(vkCreateCommandPool(m_device, &commandPoolInfo, nullptr, &m_frames[i].commandPool));
+		VK_CHECK(vkCreateCommandPool(m_device, &commandPoolInfo, nullptr, &m_frames[i].commandPool));
 
-	//	// allocate the default command buffer that we will use for rendering
-	//	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::commandBufferAllocateInfo(
-	//		m_frames[i].commandPool, 1);
+		// allocate the default command buffer that we will use for rendering
+		VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::commandBufferAllocateInfo(
+			m_frames[i].commandPool, 1);
 
-	//	VK_CHECK(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_frames[i].commandBuffer));
-	//}
+		VK_CHECK(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_frames[i].commandBuffer));
+	}
 }
 
 void View::initSyncStructures() {
@@ -359,15 +378,15 @@ void View::initSyncStructures() {
 	VkFenceCreateInfo fenceCreateInfo = vkinit::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
 	VkSemaphoreCreateInfo semaphoreCreateInfo = vkinit::semaphoreCreateInfo(0);
 
-	//for (int i = 0; i < FRAME_OVERLAP; i++) {
-	//	VK_CHECK(vkCreateFence(m_device, &fenceCreateInfo, nullptr, 
-	//		&m_frames[i].renderFence));
+	for (int i = 0; i < FRAME_OVERLAP; i++) {
+		VK_CHECK(vkCreateFence(m_device, &fenceCreateInfo, nullptr, 
+			&m_frames[i].renderFence));
 
-	//	VK_CHECK(vkCreateSemaphore(m_device, &semaphoreCreateInfo, nullptr, 
-	//		&m_frames[i].swapchainSemaphore));
-	//	VK_CHECK(vkCreateSemaphore(m_device, &semaphoreCreateInfo, nullptr, 
-	//		&m_frames[i].renderSemaphore));
-	//}
+		VK_CHECK(vkCreateSemaphore(m_device, &semaphoreCreateInfo, nullptr, 
+			&m_frames[i].swapchainSemaphore));
+		VK_CHECK(vkCreateSemaphore(m_device, &semaphoreCreateInfo, nullptr, 
+			&m_frames[i].renderSemaphore));
+	}
 
 	VK_CHECK(vkCreateFence(m_device, &fenceCreateInfo, nullptr, &m_immFence));
 	m_deletionQueue.push_function([=]() {
@@ -428,12 +447,22 @@ void View::initBackgroundPipelines() {
 	pushConstant.size = sizeof(ComputePushConstants);
 	pushConstant.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
+	computeLayout.pPushConstantRanges = &pushConstant;
+	computeLayout.pushConstantRangeCount = 1;
+
+
+
 	VK_CHECK(vkCreatePipelineLayout(m_device, &computeLayout, 
 		nullptr, &m_gradientPipelineLayout));
 
 	//layout code
-	VkShaderModule computeDrawShader;
-	if (!vkutil::loadShaderModule("./shader2.spv", m_device, &computeDrawShader)) {
+	VkShaderModule gradientShader;
+	if (!vkutil::loadShaderModule("./gradient_color.spv", m_device, &gradientShader)) {
+		std::cout << "Error when building the compute shader \n";
+	}
+
+	VkShaderModule skyShader;
+	if (!vkutil::loadShaderModule("./sky.spv", m_device, &skyShader)) {
 		std::cout << "Error when building the compute shader \n";
 	}
 
@@ -441,7 +470,7 @@ void View::initBackgroundPipelines() {
 	stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	stageinfo.pNext = nullptr;
 	stageinfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	stageinfo.module = computeDrawShader;
+	stageinfo.module = gradientShader;
 	stageinfo.pName = "main";
 
 	VkComputePipelineCreateInfo computePipelineCreateInfo{};
@@ -450,14 +479,43 @@ void View::initBackgroundPipelines() {
 	computePipelineCreateInfo.layout = m_gradientPipelineLayout;
 	computePipelineCreateInfo.stage = stageinfo;
 
+	ComputeEffect gradient;
+	gradient.layout = m_gradientPipelineLayout;
+	gradient.name = "gradient_color";
+	gradient.data = {};
+
+	//default colors
+	gradient.data.data1 = glm::vec4(1, 0, 0, 1);
+	gradient.data.data2 = glm::vec4(0, 0, 1, 1);
+
 	VK_CHECK(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, 
 		&computePipelineCreateInfo, nullptr, &m_gradientPipeline));
 
-	vkDestroyShaderModule(m_device, computeDrawShader, nullptr);
+	//change the shader module only to create the sky shader
+	computePipelineCreateInfo.stage.module = skyShader;
+
+	ComputeEffect sky;
+	sky.layout = m_gradientPipelineLayout;
+	sky.name = "sky";
+	sky.data = {};
+	//default sky parameters
+	sky.data.data1 = glm::vec4(0.1, 0.2, 0.4, 0.97);
+
+	VK_CHECK(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1,
+		&computePipelineCreateInfo, nullptr, &m_gradientPipeline));
+
+	//add the 2 background effects into the array
+	m_backgroundEffects.push_back(gradient);
+	m_backgroundEffects.push_back(sky);
+
+	vkDestroyShaderModule(m_device, gradientShader, nullptr);
+	vkDestroyShaderModule(m_device, skyShader, nullptr);
 
 	m_deletionQueue.push_function([&]() {
 		vkDestroyPipelineLayout(m_device, m_gradientPipelineLayout, nullptr);
-		vkDestroyPipeline(m_device, m_gradientPipeline, nullptr);
+		//vkDestroyPipeline(m_device, m_gradientPipeline, nullptr);
+		vkDestroyPipeline(m_device, sky.pipeline, nullptr);
+		vkDestroyPipeline(m_device, gradient.pipeline, nullptr);
 		});
 }
 
@@ -530,6 +588,8 @@ void View::initImgui() {
 	init_info.MinImageCount = 3;
 	init_info.ImageCount = 3;
 	init_info.UseDynamicRendering = true;
+	init_info.PipelineRenderingCreateInfo = {};
+	init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
 	//init_info.ColorAttachmentFormat = m_swapchainImageFormat;
 
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
@@ -579,12 +639,28 @@ void View::cleanup() {
 
 void View::newFrame() {
 	// imgui new frame
-	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplVulkan_NewFrame();    
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 
 	//some imgui UI to test
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
+	if (ImGui::Begin("background")) {
+
+		ComputeEffect &selected = m_backgroundEffects[m_currentBackgroundEffect];
+
+		ImGui::Text("Selected effect: ", selected.name);
+
+		ImGui::SliderInt("Effect Index", &m_currentBackgroundEffect, 0, 
+			m_backgroundEffects.size() - 1);
+
+		ImGui::InputFloat4("data1", (float *)&selected.data.data1);
+		ImGui::InputFloat4("data2", (float *)&selected.data.data2);
+		ImGui::InputFloat4("data3", (float *)&selected.data.data3);
+		ImGui::InputFloat4("data4", (float *)&selected.data.data4);
+
+		ImGui::End();
+	}
 
 	//make imgui calculate internal draw structures
 	ImGui::Render();

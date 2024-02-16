@@ -87,9 +87,12 @@ public:
 	VkFence m_immFence;
 	VkCommandBuffer m_immCommandBuffer;
 	VkCommandPool m_immCommandPool;
-	void imguiEventProcessing(SDL_Event *_event) {
-		ImGui_ImplSDL2_ProcessEvent(_event);
-	}
+
+	// 
+	// imgui stuff
+	void imguiEventProcessing(SDL_Event *_event) {ImGui_ImplSDL2_ProcessEvent(_event);}
+	std::vector<ComputeEffect> m_backgroundEffects;
+	int m_currentBackgroundEffect{ 0 };
 private:
 	// core
 	void initVulkan();

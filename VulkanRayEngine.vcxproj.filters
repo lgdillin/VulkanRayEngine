@@ -83,6 +83,9 @@
     <None Include="shader2.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="gradient_color.comp">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="View_old.hpp">
