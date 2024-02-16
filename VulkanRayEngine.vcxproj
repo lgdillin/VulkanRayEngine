@@ -137,6 +137,13 @@
   <ItemGroup>
     <ClCompile Include="Controller.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="imgui_demo.cpp" />
+    <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="imgui_impl_sdl2.cpp" />
+    <ClCompile Include="imgui_impl_vulkan.cpp" />
+    <ClCompile Include="imgui_tables.cpp" />
+    <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="View.cpp" />
     <ClCompile Include="View_old.cpp" />
@@ -147,10 +154,20 @@
     <None Include="shader1.frag" />
     <None Include="shader1.vert" />
     <None Include="shader1_2.vert" />
+    <None Include="shader2.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller.hpp" />
     <ClInclude Include="Game.hpp" />
+    <ClInclude Include="Headers.hpp" />
+    <ClInclude Include="imconfig.h" />
+    <ClInclude Include="imgui.h" />
+    <ClInclude Include="imgui_impl_sdl2.h" />
+    <ClInclude Include="imgui_impl_vulkan.h" />
+    <ClInclude Include="imgui_internal.h" />
+    <ClInclude Include="imstb_rectpack.h" />
+    <ClInclude Include="imstb_textedit.h" />
+    <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="PipelineBuilder.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Structs.hpp" />

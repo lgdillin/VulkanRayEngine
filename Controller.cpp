@@ -23,6 +23,12 @@ void Controller::update() {
 		case SDL_KEYUP:
 			keyUp(&event.key);
 			break;
+		case SDL_WINDOWEVENT:
+			if (event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+				m_view->m_stopRendering = true;
+			if (event.window.event == SDL_WINDOWEVENT_RESTORED)
+				m_view->m_stopRendering = false;
+			break;
 		case SDL_QUIT:
 			exit(0);
 			break;

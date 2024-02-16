@@ -1,5 +1,3 @@
-glslc.exe ../shader1.vert -o ../shader1v.spv
-glslc.exe ../shader1_2.vert -o ../shader1_2v.spv
-glslc.exe ../shader1.frag -o ../shader1f.spv
+glslc.exe -c -fshader-stage=compute ../shader2.glsl -o ../shader2.spv
 echo "done"
 pause

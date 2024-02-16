@@ -55,11 +55,18 @@ int main(int argc, char *argv[]) {
 	while (!quit) {
 		frameStart = SDL_GetTicks();
 
-		//controller.update();
+		controller.update();
+
+		// act if we are minimized
+		if (view.m_stopRendering) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			continue;
+		}
 
 		game.update();
 
 		// updating
+		view.newFrame();
 		view.draw();
 
 		calculateFPS(&view);
