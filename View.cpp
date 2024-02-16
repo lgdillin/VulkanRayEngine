@@ -36,7 +36,7 @@ void View::draw() {
 
 	// now that we are sure that the commands finished executing, we can safely
 	// reset the command buffer to begin recording again.
-	VK_CHECK(vkResetCommandBuffer(cmd, 0));
+ 	VK_CHECK(vkResetCommandBuffer(cmd, 0));
 
 	//begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
 	VkCommandBufferBeginInfo cmdBeginInfo 
