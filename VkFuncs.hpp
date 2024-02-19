@@ -234,6 +234,28 @@ namespace vkinit {
         renderInfo.pStencilAttachment = nullptr;
         return renderInfo;
     }
+
+    static VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfo(
+        VkShaderStageFlagBits _stage,
+        VkShaderModule _module
+    ) {
+        VkPipelineShaderStageCreateInfo stageinfo{};
+        stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        stageinfo.pNext = nullptr;
+        stageinfo.stage = _stage;
+        stageinfo.module = _module;
+        stageinfo.pName = "main";
+
+        return stageinfo;
+    }
+
+    static VkPipelineLayoutCreateInfo  pipelineLayoutCreateInfo() {
+        VkPipelineLayoutCreateInfo info = {};
+        info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        info.pNext = nullptr;
+
+        return info;
+    }
 }
 
 namespace vkutil {

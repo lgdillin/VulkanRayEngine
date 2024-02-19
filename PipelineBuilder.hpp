@@ -5,6 +5,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VkFuncs.hpp"
+
 class PipelineBuilder {
 public:
     PipelineBuilder() { clear(); }
@@ -47,7 +49,7 @@ public:
 
     VkPipeline buildPipeline(VkDevice _device) {
         // make viewport state from our stored viewport and scissor.
-    // at the moment we wont support multiple viewports or scissors
+        // at the moment we wont support multiple viewports or scissors
         VkPipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.pNext = nullptr;
@@ -114,5 +116,82 @@ public:
         else {
             return newPipeline;
         }
+    }
+
+    void setShaders(VkShaderModule _vertexShader, VkShaderModule _fragmentShader) {
+        m_shaderStages.clear();
+
+        m_shaderStages.push_back(
+            vkinit::pipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, _vertexShader));
+
+        m_shaderStages.push_back(
+            vkinit::pipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, _fragmentShader));
+    }
+
+    void setInputTopology(VkPrimitiveTopology topology) {
+        m_inputAssembly.topology = topology;
+        // we are not going to use primitive restart on the entire tutorial so leave
+        // it on false
+        m_inputAssembly.primitiveRestartEnable = VK_FALSE;
+    }
+
+    void setPolygonMode(VkPolygonMode mode) {
+        m_rasterizer.polygonMode = mode;
+        m_rasterizer.lineWidth = 1.f;
+    }
+
+    void setCullMode(VkCullModeFlags cullMode, VkFrontFace frontFace) {
+        m_rasterizer.cullMode = cullMode;
+        m_rasterizer.frontFace = frontFace;
+    }
+
+    void setMultisamplingNone()
+    {
+        m_multisampling.sampleShadingEnable = VK_FALSE;
+        // multisampling defaulted to no multisampling (1 sample per pixel)
+        m_multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        m_multisampling.minSampleShading = 1.0f;
+        m_multisampling.pSampleMask = nullptr;
+        //no alpha to coverage either
+        m_multisampling.alphaToCoverageEnable = VK_FALSE;
+        m_multisampling.alphaToOneEnable = VK_FALSE;
+    }
+
+    void disableBlending()
+    {
+        //default write mask
+        m_colorBlendAttachment.colorWriteMask 
+            = VK_COLOR_COMPONENT_R_BIT 
+            | VK_COLOR_COMPONENT_G_BIT 
+            | VK_COLOR_COMPONENT_B_BIT 
+            | VK_COLOR_COMPONENT_A_BIT;
+        //no blending
+        m_colorBlendAttachment.blendEnable = VK_FALSE;
+    }
+
+    void setColorAttachmentFormat(VkFormat format)
+    {
+        m_colorAttachmentformat = format;
+        //connect the format to the renderInfo  structure
+        m_renderInfo.colorAttachmentCount = 1;
+        m_renderInfo.pColorAttachmentFormats = &m_colorAttachmentformat;
+    }
+
+    void setDepthFormat(VkFormat format)
+    {
+        m_renderInfo.depthAttachmentFormat = format;
+    }
+
+    void disableDepthtest()
+    {
+        m_depthStencil.depthTestEnable = VK_FALSE;
+        m_depthStencil.depthWriteEnable = VK_FALSE;
+        m_depthStencil.depthCompareOp = VK_COMPARE_OP_NEVER;
+        m_depthStencil.depthBoundsTestEnable = VK_FALSE;
+        m_depthStencil.stencilTestEnable = VK_FALSE;
+        m_depthStencil.front = {};
+        m_depthStencil.back = {};
+        m_depthStencil.minDepthBounds = 0.f;
+        m_depthStencil.maxDepthBounds = 1.f;
     }
 };
