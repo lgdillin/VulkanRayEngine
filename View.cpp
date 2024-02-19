@@ -10,6 +10,12 @@ View::~View() {
 }
 
 void View::draw() {
+	//ImGui_ImplVulkan_NewFrame();
+	//ImGui_ImplSDL2_NewFrame();
+	//ImGui::NewFrame();
+	//ImGui::ShowDemoWindow();
+	//ImGui::Render();
+
 	//check if window is minimized and skip drawing
 	if (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED)
 		return;
@@ -67,7 +73,7 @@ void View::draw() {
 
 	// set swapchain image layout to Present so we can show it on the screen
 	vkutil::transitionImage(cmd, m_swapchainImages[swapchainImageIndex], 
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 	drawImgui(cmd, m_swapchainImageViews[swapchainImageIndex]);
 
@@ -161,6 +167,9 @@ void View::drawImgui(VkCommandBuffer _cmd, VkImageView _targetImageView) {
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), _cmd);
 
 	vkCmdEndRendering(_cmd);
+
+	//ImGui::UpdatePlatformWindows();
+	//ImGui::RenderPlatformWindowsDefault();
 }
 
 void View::initialize() {
@@ -206,6 +215,8 @@ void View::initVulkan() {
 	m_debugMessenger = vkb_inst.debug_messenger;
 
 	SDL_Vulkan_CreateSurface(m_window, m_instance, &m_surface);
+
+	//SetupVulkan_SelectPhysicalDevice();
 
 	//vulkan 1.3 features
 	VkPhysicalDeviceVulkan13Features features{};
@@ -489,7 +500,7 @@ void View::initBackgroundPipelines() {
 	gradient.data.data2 = glm::vec4(0, 0, 1, 1);
 
 	VK_CHECK(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, 
-		&computePipelineCreateInfo, nullptr, &m_gradientPipeline));
+		&computePipelineCreateInfo, nullptr, &gradient.pipeline));
 
 	//change the shader module only to create the sky shader
 	computePipelineCreateInfo.stage.module = skyShader;
@@ -502,7 +513,7 @@ void View::initBackgroundPipelines() {
 	sky.data.data1 = glm::vec4(0.1, 0.2, 0.4, 0.97);
 
 	VK_CHECK(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1,
-		&computePipelineCreateInfo, nullptr, &m_gradientPipeline));
+		&computePipelineCreateInfo, nullptr, &sky.pipeline));
 
 	//add the 2 background effects into the array
 	m_backgroundEffects.push_back(gradient);
@@ -573,7 +584,20 @@ void View::initImgui() {
 	// 2: initialize imgui library
 
 	// this initializes the core structures of imgui
+	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImGuiIO &io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+
+	ImGui::StyleColorsDark();
+	ImGuiStyle &style = ImGui::GetStyle();
+	//if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+	//	style.WindowRounding = 0.0f;
+	//	style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+	//}
 
 	// this initializes imgui for SDL
 	ImGui_ImplSDL2_InitForVulkan(m_window);
@@ -584,25 +608,32 @@ void View::initImgui() {
 	init_info.PhysicalDevice = m_gpu;
 	init_info.Device = m_device;
 	init_info.Queue = m_graphicsQueue;
+	init_info.QueueFamily = m_graphicsQueueFamily;
 	init_info.DescriptorPool = imguiPool;
 	init_info.MinImageCount = 3;
 	init_info.ImageCount = 3;
+	
 	init_info.UseDynamicRendering = true;
-	init_info.PipelineRenderingCreateInfo = {};
-	init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-	//init_info.ColorAttachmentFormat = m_swapchainImageFormat;
+	init_info.ColorAttachmentFormat = m_swapchainImageFormat;
+	//init_info.PipelineRenderingCreateInfo = {};
+	//init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+	//init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &m_swapchainImageFormat;
+	//init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = m_swapchainImageFormat;
 
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	//init_info.Allocator = m_allocator;
 
-	ImGui_ImplVulkan_Init(&init_info);
+	ImGui_ImplVulkan_Init(&init_info, VK_NULL_HANDLE);
 
 	// execute a gpu command to upload imgui font textures
-	immediateSubmit([&](VkCommandBuffer cmd) { 
-		ImGui_ImplVulkan_CreateFontsTexture(); 
-	});
+	ImGui_ImplVulkan_CreateFontsTexture();
+	//immediateSubmit([&](VkCommandBuffer cmd) { 
+	//	ImGui_ImplVulkan_CreateFontsTexture(); 
+	//});
 
 	// clear font textures from cpu data
-	ImGui_ImplVulkan_DestroyFontsTexture();
+	//ImGui_ImplVulkan_
+	//ImGui_ImplVulkan_DestroyFontsTexture();
 
 	// add the destroy the imgui created structures
 	m_deletionQueue.push_function([=]() {
@@ -644,7 +675,6 @@ void View::newFrame() {
 	ImGui::NewFrame();
 
 	//some imgui UI to test
-	//ImGui::ShowDemoWindow();
 	if (ImGui::Begin("background")) {
 
 		ComputeEffect &selected = m_backgroundEffects[m_currentBackgroundEffect];
@@ -662,6 +692,6 @@ void View::newFrame() {
 		ImGui::End();
 	}
 
-	//make imgui calculate internal draw structures
 	ImGui::Render();
+	//make imgui calculate internal draw structures
 }

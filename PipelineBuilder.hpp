@@ -7,179 +7,112 @@
 
 class PipelineBuilder {
 public:
-	PipelineBuilder() {
-		
-	}
+    PipelineBuilder() { clear(); }
 	~PipelineBuilder() {}
 
-	std::vector<VkPipelineShaderStageCreateInfo> m_shaderStages;
-	VkPipelineVertexInputStateCreateInfo m_vertexInputInfo;
-	VkPipelineInputAssemblyStateCreateInfo m_inputAssembly;
-	VkViewport m_viewport;
-	VkRect2D m_scissor;
-	VkPipelineRasterizationStateCreateInfo m_rasterizer;
-	VkPipelineColorBlendAttachmentState m_colorBlendAttachment;
-	VkPipelineMultisampleStateCreateInfo m_multisampling;
-	VkPipelineLayout m_pipelineLayout;
+    std::vector<VkPipelineShaderStageCreateInfo> m_shaderStages;
+    VkPipelineInputAssemblyStateCreateInfo m_inputAssembly;
+    VkPipelineRasterizationStateCreateInfo m_rasterizer;
+    VkPipelineColorBlendAttachmentState m_colorBlendAttachment;
+    VkPipelineMultisampleStateCreateInfo m_multisampling;
+    VkPipelineLayout m_pipelineLayout;
+    VkPipelineDepthStencilStateCreateInfo m_depthStencil;
+    VkPipelineRenderingCreateInfo m_renderInfo;
+    VkFormat m_colorAttachmentformat;
 
-	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo() {
-		VkPipelineLayoutCreateInfo info{};
-		info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		info.pNext = nullptr;
+    void clear() {
+        //clear all of the structs we need back to 0 with their correct stype	
 
-		//empty defaults
-		info.flags = 0;
-		info.setLayoutCount = 0;
-		info.pSetLayouts = nullptr;
-		info.pushConstantRangeCount = 0;
-		info.pPushConstantRanges = nullptr;
-		return info;
-	}
+        m_inputAssembly = { 
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
 
-	VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfo(
-		VkShaderStageFlagBits _stage, 
-		VkShaderModule _shaderModule
-	) {
-		VkPipelineShaderStageCreateInfo info{};
-		info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		info.pNext = nullptr;
+        m_rasterizer = { 
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
 
-		//shader stage
-		info.stage = _stage;
-		//module containing the code for this shader stage
-		info.module = _shaderModule;
-		//the entry point of the shader
-		info.pName = "main";
-		return info;
-	}
+        m_colorBlendAttachment = {};
 
-	VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo() {
-		VkPipelineVertexInputStateCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		info.pNext = nullptr;
+        m_multisampling = { 
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
 
-		//no vertex bindings or attributes
-		info.vertexBindingDescriptionCount = 0;
-		info.vertexAttributeDescriptionCount = 0;
-		return info;
-	}
+        m_pipelineLayout = {};
 
-	VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo(
-		VkPrimitiveTopology _topology
-	) {
-		VkPipelineInputAssemblyStateCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		info.pNext = nullptr;
+        m_depthStencil = { 
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 
-		// example topologies
-		// VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
-		// VK_PRIMITIVE_TOPOLOGY_POINT_LIST
-		// VK_PRIMITIVE_TOPOLOGY_LINE_LIST
-		info.topology = _topology;
-		//we are not going to use primitive restart on the entire tutorial so leave it on false
-		info.primitiveRestartEnable = VK_FALSE;
-		return info;
-	}
+        m_renderInfo = { 
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
 
-	VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo(
-		VkPolygonMode _polygonMode
-	) {
-		VkPipelineRasterizationStateCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		info.pNext = nullptr;
+        m_shaderStages.clear();
+    }
 
-		info.depthClampEnable = VK_FALSE;
-		//discards all primitives before the rasterization stage if enabled which we don't want
-		info.rasterizerDiscardEnable = VK_FALSE;
+    VkPipeline buildPipeline(VkDevice _device) {
+        // make viewport state from our stored viewport and scissor.
+    // at the moment we wont support multiple viewports or scissors
+        VkPipelineViewportStateCreateInfo viewportState = {};
+        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportState.pNext = nullptr;
 
-		info.polygonMode = _polygonMode;
-		info.lineWidth = 1.0f;
-		//no backface cull
-		info.cullMode = VK_CULL_MODE_NONE;
-		info.frontFace = VK_FRONT_FACE_CLOCKWISE;
-		//no depth bias
-		info.depthBiasEnable = VK_FALSE;
-		info.depthBiasConstantFactor = 0.0f;
-		info.depthBiasClamp = 0.0f;
-		info.depthBiasSlopeFactor = 0.0f;
+        viewportState.viewportCount = 1;
+        viewportState.scissorCount = 1;
 
-		return info;
-	}
+        // setup dummy color blending. We arent using transparent objects yet
+        // the blending is just "no blend", but we do write to the color attachment
+        VkPipelineColorBlendStateCreateInfo colorBlending = {};
+        colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlending.pNext = nullptr;
 
-	VkPipelineMultisampleStateCreateInfo multisamplingStateCreateInfo() {
-		VkPipelineMultisampleStateCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		info.pNext = nullptr;
+        colorBlending.logicOpEnable = VK_FALSE;
+        colorBlending.logicOp = VK_LOGIC_OP_COPY;
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &m_colorBlendAttachment;
 
-		info.sampleShadingEnable = VK_FALSE;
-		//multisampling defaulted to no multisampling (1 sample per pixel)
-		info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-		info.minSampleShading = 1.0f;
-		info.pSampleMask = nullptr;
-		info.alphaToCoverageEnable = VK_FALSE;
-		info.alphaToOneEnable = VK_FALSE;
-		return info;
-	}
 
-	VkPipelineColorBlendAttachmentState colorBlendAttachmentState() {
-		VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-			VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_FALSE;
-		return colorBlendAttachment;
-	}
+        //completely clear VertexInputStateCreateInfo, as we have no need for it
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo = { 
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+    
+        // build the actual pipeline
+        // we now use all of the info structs we have been writing into into this one
+        // to create the pipeline
+        VkGraphicsPipelineCreateInfo pipelineInfo = { 
+            .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+        //connect the renderInfo to the pNext extension mechanism
+        pipelineInfo.pNext = &m_renderInfo;
 
-	VkPipeline buildPipeline(VkDevice _device, VkRenderPass _pass) {
-		//make viewport state from our stored viewport and scissor.
-		//at the moment we won't support multiple viewports or scissors
-		VkPipelineViewportStateCreateInfo viewportState = {};
-		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewportState.pNext = nullptr;
+        pipelineInfo.stageCount = (uint32_t)m_shaderStages.size();
+        pipelineInfo.pStages = m_shaderStages.data();
+        pipelineInfo.pVertexInputState = &vertexInputInfo;
+        pipelineInfo.pInputAssemblyState = &m_inputAssembly;
+        pipelineInfo.pViewportState = &viewportState;
+        pipelineInfo.pRasterizationState = &m_rasterizer;
+        pipelineInfo.pMultisampleState = &m_multisampling;
+        pipelineInfo.pColorBlendState = &colorBlending;
+        pipelineInfo.pDepthStencilState = &m_depthStencil;
+        pipelineInfo.layout = m_pipelineLayout;
 
-		viewportState.viewportCount = 1;
-		viewportState.pViewports = &m_viewport;
-		viewportState.scissorCount = 1;
-		viewportState.pScissors = &m_scissor;
+        VkDynamicState state[] = { 
+            VK_DYNAMIC_STATE_VIEWPORT, 
+            VK_DYNAMIC_STATE_SCISSOR 
+        };
 
-		//setup dummy color blending. We aren't using transparent objects yet
-		//the blending is just "no blend", but we do write to the color attachment
-		VkPipelineColorBlendStateCreateInfo colorBlending = {};
-		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colorBlending.pNext = nullptr;
+        VkPipelineDynamicStateCreateInfo dynamicInfo = { 
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
+        dynamicInfo.pDynamicStates = &state[0];
+        dynamicInfo.dynamicStateCount = 2;
 
-		colorBlending.logicOpEnable = VK_FALSE;
-		colorBlending.logicOp = VK_LOGIC_OP_COPY;
-		colorBlending.attachmentCount = 1;
-		colorBlending.pAttachments = &m_colorBlendAttachment;
+        pipelineInfo.pDynamicState = &dynamicInfo;
 
-		//build the actual pipeline
-		//we now use all of the info structs we have been writing into into this one to create the pipeline
-		VkGraphicsPipelineCreateInfo pipelineInfo = {};
-		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.pNext = nullptr;
-
-		pipelineInfo.stageCount = m_shaderStages.size();
-		pipelineInfo.pStages = m_shaderStages.data();
-		pipelineInfo.pVertexInputState = &m_vertexInputInfo;
-		pipelineInfo.pInputAssemblyState = &m_inputAssembly;
-		pipelineInfo.pViewportState = &viewportState;
-		pipelineInfo.pRasterizationState = &m_rasterizer;
-		pipelineInfo.pMultisampleState = &m_multisampling;
-		pipelineInfo.pColorBlendState = &colorBlending;
-		pipelineInfo.layout = m_pipelineLayout;
-		pipelineInfo.renderPass = _pass;
-		pipelineInfo.subpass = 0;
-		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-
-		//it's easy to error out on create graphics pipeline, so we handle it a bit better than the common VK_CHECK case
-		VkPipeline newPipeline;
-		if (vkCreateGraphicsPipelines(
-			_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline) != VK_SUCCESS) {
-			std::cout << "failed to create pipeline\n";
-			return VK_NULL_HANDLE; // failed to create graphics pipeline
-		} else
-		{
-			return newPipeline;
-		}
-	}
+        // its easy to error out on create graphics pipeline, so we handle it a bit
+        // better than the common VK_CHECK case
+        VkPipeline newPipeline;
+        if (vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo,
+            nullptr, &newPipeline)
+            != VK_SUCCESS) {
+            std::cout << "failed to create pipeline" << std::endl;
+            return VK_NULL_HANDLE; // failed to create graphics pipeline
+        }
+        else {
+            return newPipeline;
+        }
+    }
 };
