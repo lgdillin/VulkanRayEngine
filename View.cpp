@@ -61,8 +61,13 @@ void View::draw() {
 
 	drawBackground();
 
+	vkutil::transitionImage(cmd, m_drawImage.image, VK_IMAGE_LAYOUT_GENERAL,
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+	drawGeometry(cmd);
+
 	// transition the draw image and the swapchain image into their correst transfer layout
-	vkutil::transitionImage(cmd, m_drawImage.image, VK_IMAGE_LAYOUT_GENERAL, 
+	vkutil::transitionImage(cmd, m_drawImage.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 	vkutil::transitionImage(cmd, m_swapchainImages[swapchainImageIndex], 
 		VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -122,6 +127,58 @@ void View::draw() {
 	//increase the number of frames drawn
 	m_frameNumber++;
 }
+
+void View::drawGeometry(VkCommandBuffer _cmd) {
+	//begin a render pass  connected to our draw image
+	VkRenderingAttachmentInfo colorAttachment 
+		= vkinit::attachmentInfo(m_drawImage.imageView, 
+			nullptr, VK_IMAGE_LAYOUT_GENERAL);
+
+	VkRenderingInfo renderInfo 
+		= vkinit::renderingInfo(m_drawExtent, &colorAttachment, nullptr);
+	vkCmdBeginRendering(_cmd, &renderInfo);
+
+	vkCmdBindPipeline(_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_trianglePipeline);
+
+	//set dynamic viewport and scissor
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = m_drawExtent.width;
+	viewport.height = m_drawExtent.height;
+	viewport.minDepth = 0.f;
+	viewport.maxDepth = 1.f;
+
+	vkCmdSetViewport(_cmd, 0, 1, &viewport);
+
+	VkRect2D scissor = {};
+	scissor.offset.x = 0;
+	scissor.offset.y = 0;
+	scissor.extent.width = m_drawExtent.width;
+	scissor.extent.height = m_drawExtent.height;
+
+	vkCmdSetScissor(_cmd, 0, 1, &scissor);
+
+	//launch a draw command to draw 3 vertices
+	vkCmdDraw(_cmd, 3, 1, 0, 0);
+	//vkCmdEndRendering(_cmd);
+
+	vkCmdBindPipeline(_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_meshPipeline);
+
+	GPUDrawPushConstants push_constants;
+	push_constants.worldMatrix = glm::mat4{ 1.f };
+	push_constants.vertexBuffer = m_rectangle.vertexBufferAddress;
+
+	vkCmdPushConstants(_cmd, m_meshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 
+		0, sizeof(GPUDrawPushConstants), &push_constants);
+	vkCmdBindIndexBuffer(_cmd, m_rectangle.indexBuffer.buffer, 0, 
+		VK_INDEX_TYPE_UINT32);
+
+	vkCmdDrawIndexed(_cmd, 6, 1, 0, 0, 0);
+
+	vkCmdEndRendering(_cmd);
+}
+
 
 void View::drawBackground() {
 	//make a clear-color from frame number. This will flash with a 120 frame period.
@@ -192,6 +249,8 @@ void View::initialize() {
 	initDescriptors();
 	initPipelines();
 	initImgui();
+
+	initDefaultData();
 
 	m_initialized = true;
 }
@@ -444,6 +503,8 @@ void View::initDescriptors() {
 
 void View::initPipelines() {
 	initBackgroundPipelines();
+	initTriangle();
+	initMeshPipeline();
 }
 
 void View::initBackgroundPipelines() {
@@ -640,6 +701,87 @@ void View::initImgui() {
 		vkDestroyDescriptorPool(m_device, imguiPool, nullptr);
 		ImGui_ImplVulkan_Shutdown();
 		});
+}
+
+AllocatedBuffer View::createBuffer(size_t _allocSize, 
+	VkBufferUsageFlags _usage, VmaMemoryUsage _memoryUsage
+) {
+	// allocate buffer
+	VkBufferCreateInfo bufferInfo = { 
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+	bufferInfo.pNext = nullptr;
+	bufferInfo.size = _allocSize;
+
+	bufferInfo.usage = _usage;
+
+	VmaAllocationCreateInfo vmaallocInfo = {};
+	vmaallocInfo.usage = _memoryUsage;
+	vmaallocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+	AllocatedBuffer newBuffer;
+
+	// allocate the buffer
+	VK_CHECK(vmaCreateBuffer(m_allocator, &bufferInfo, &vmaallocInfo,
+		&newBuffer.buffer, &newBuffer.allocation, &newBuffer.info));
+
+	return newBuffer;
+}
+
+GPUMeshBuffers View::uploadMesh(std::span<uint32_t> _indices, std::span<Vertex> _vertices) {
+	const size_t vertexBufferSize = _vertices.size() * sizeof(Vertex);
+	const size_t indexBufferSize = _indices.size() * sizeof(uint32_t);
+
+	GPUMeshBuffers newSurface;
+
+	//create vertex buffer
+	newSurface.vertexBuffer = createBuffer(vertexBufferSize, 
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT 
+		| VK_BUFFER_USAGE_TRANSFER_DST_BIT 
+		| VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		VMA_MEMORY_USAGE_GPU_ONLY);
+
+	//find the adress of the vertex buffer
+	VkBufferDeviceAddressInfo deviceAdressInfo{ 
+		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+		.buffer = newSurface.vertexBuffer.buffer };
+	newSurface.vertexBufferAddress = vkGetBufferDeviceAddress(m_device, 
+		&deviceAdressInfo);
+
+	//create index buffer
+	newSurface.indexBuffer = createBuffer(indexBufferSize, 
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT 
+		| VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		VMA_MEMORY_USAGE_GPU_ONLY);
+
+	AllocatedBuffer staging 
+		= createBuffer(vertexBufferSize + indexBufferSize, 
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+			VMA_MEMORY_USAGE_CPU_ONLY);
+
+	void *data = staging.allocation->GetMappedData();
+
+	// copy vertex buffer
+	memcpy(data, _vertices.data(), vertexBufferSize);
+	// copy index buffer
+	memcpy((char *)data + vertexBufferSize, _indices.data(), indexBufferSize);
+
+	immediateSubmit([&](VkCommandBuffer cmd) {
+		VkBufferCopy vertexCopy{ 0 };
+		vertexCopy.dstOffset = 0;
+		vertexCopy.srcOffset = 0;
+		vertexCopy.size = vertexBufferSize;
+
+		vkCmdCopyBuffer(cmd, staging.buffer, newSurface.vertexBuffer.buffer, 1, &vertexCopy);
+
+		VkBufferCopy indexCopy{ 0 };
+		indexCopy.dstOffset = 0;
+		indexCopy.srcOffset = vertexBufferSize;
+		indexCopy.size = indexBufferSize;
+
+		vkCmdCopyBuffer(cmd, staging.buffer, newSurface.indexBuffer.buffer, 1, &indexCopy);
+		});
+
+	destroyBuffer(staging);
+	return newSurface;
 }
 
 void View::cleanup() {

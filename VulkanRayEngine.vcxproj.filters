@@ -86,6 +86,15 @@
     <None Include="gradient_color.comp">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="color_triangle.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="color_triangle.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="color_triangle_mesh.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="View_old.hpp">
