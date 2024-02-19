@@ -34,6 +34,7 @@ static void calculateFPS(View *_view) {
 	}
 }
 
+
 int main(int argc, char *argv[]) {
 	// Init MVC
 	Game game;
@@ -56,13 +57,51 @@ int main(int argc, char *argv[]) {
 
 		controller.update();
 
+		// act if we are minimized
+		if (view.m_stopRendering) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			continue;
+		}
+
 		game.update();
 
 		// updating
-		view.repaint();
+		view.newFrame();
+		view.draw();
 
 		calculateFPS(&view);
 	}
+
+	return 0;
+}
+
+int main11() {
+	VkApplicationInfo appInfo = {};
+	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	appInfo.pApplicationName = "Vulkan Version Query";
+	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	appInfo.pEngineName = "No Engine";
+	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+	appInfo.apiVersion = VK_API_VERSION_1_0;
+
+	VkInstanceCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	createInfo.pApplicationInfo = &appInfo;
+
+	VkInstance instance;
+	VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
+	if (result != VK_SUCCESS) {
+		std::cerr << "Failed to create Vulkan instance" << std::endl;
+		return -1;
+	}
+
+	// Query Vulkan runtime version
+	uint32_t apiVersion;
+	vkEnumerateInstanceVersion(&apiVersion);
+	std::cout << "Vulkan Runtime Version: " << VK_VERSION_MAJOR(apiVersion) << "." << VK_VERSION_MINOR(apiVersion) << "." << VK_VERSION_PATCH(apiVersion) << std::endl;
+
+	// Clean up
+	vkDestroyInstance(instance, nullptr);
 
 	return 0;
 }

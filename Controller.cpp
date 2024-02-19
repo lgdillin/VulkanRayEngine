@@ -16,12 +16,20 @@ void Controller::update() {
 	}
 
 	while (SDL_PollEvent(&event)) {
+		ImGui_ImplSDL2_ProcessEvent(&event);
+
 		switch (event.type) {
 		case SDL_KEYDOWN:
 			keyDown(&event.key);
 			break;
 		case SDL_KEYUP:
 			keyUp(&event.key);
+			break;
+		case SDL_WINDOWEVENT:
+			if (event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+				m_view->m_stopRendering = true;
+			if (event.window.event == SDL_WINDOWEVENT_RESTORED)
+				m_view->m_stopRendering = false;
 			break;
 		case SDL_QUIT:
 			exit(0);
@@ -34,11 +42,11 @@ void Controller::keyDown(SDL_KeyboardEvent *_event) {
 	if (_event->repeat == 0) {
 		if (_event->keysym.scancode == SDL_SCANCODE_UP) {
 			std::cout << "Up pressed" << std::endl;
-			if (m_view->m_shaderMode == 0) {
-				m_view->m_shaderMode = 1;
-			} else if (m_view->m_shaderMode == 1) {
-				m_view->m_shaderMode = 0;
-			}
+			//if (m_view->m_shaderMode == 0) {
+			//	m_view->m_shaderMode = 1;
+			//} else if (m_view->m_shaderMode == 1) {
+			//	m_view->m_shaderMode = 0;
+			//}
 		}
 	}
 }
