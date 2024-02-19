@@ -65,6 +65,10 @@ int main(int argc, char *argv[]) {
 
 		game.update();
 
+		if (view.m_resizeRequested) {
+			view.resizeSwapchain();
+		}
+
 		// updating
 		view.newFrame();
 		view.draw();

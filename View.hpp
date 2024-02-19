@@ -35,6 +35,7 @@ public:
 	// project
 	SDL_Window *getWindow() { return m_window; }
 	Game *m_game;
+	bool m_resizeRequested;
 	bool m_initialized;
 	bool m_stopRendering;
 
@@ -57,6 +58,8 @@ public:
 	std::vector<VkImage> m_swapchainImages; // VkImage is the texture we render onto
 	std::vector<VkImageView> m_swapchainImageViews; // VkImageView is wrapper for VkImage
 	VkExtent2D m_swapchainExtent;
+	VkExtent2D m_drawExtent;
+	float m_renderScale = 1.0f;
 
 	//
 	// command
@@ -71,7 +74,6 @@ public:
 	// memory
 	VmaAllocator m_allocator;
 	AllocatedImage m_drawImage;
-	VkExtent2D m_drawExtent;
 
 	// 
 	// descriptors
@@ -102,6 +104,9 @@ private:
 	// swapchain
 	void initSwapchain();
 	void createSwapchain(uint32_t _width, uint32_t _height);
+public:
+	void resizeSwapchain();
+private:
 	void destroySwapchain();
 	void initCommands();
 	void initSyncStructures();
@@ -121,8 +126,10 @@ private:
 	AllocatedBuffer createBuffer(size_t _allocSize, VkBufferUsageFlags _usage, VmaMemoryUsage _memoryUsage);
 	void destroyBuffer(const AllocatedBuffer &_buffer) {vmaDestroyBuffer(m_allocator, _buffer.buffer, _buffer.allocation);}
 
+public:
 	// mesh
 	GPUMeshBuffers uploadMesh(std::span<uint32_t> _indices, std::span<Vertex> _vertices);
+private:
 
 	// cleanup
 	void cleanup();

@@ -3,6 +3,7 @@
 
 View::View(Game &_game) : m_game(&_game) {
 	m_stopRendering = false;
+	m_resizeRequested = false;
 }
 
 View::~View() {
@@ -10,12 +11,6 @@ View::~View() {
 }
 
 void View::draw() {
-	//ImGui_ImplVulkan_NewFrame();
-	//ImGui_ImplSDL2_NewFrame();
-	//ImGui::NewFrame();
-	//ImGui::ShowDemoWindow();
-	//ImGui::Render();
-
 	//check if window is minimized and skip drawing
 	if (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED)
 		return;
@@ -34,8 +29,14 @@ void View::draw() {
 
 	//request image from the swapchain
 	uint32_t swapchainImageIndex;
-	VK_CHECK(vkAcquireNextImageKHR(m_device, m_swapchain, 1000000000, 
-		getCurrentFrame().swapchainSemaphore, nullptr, &swapchainImageIndex));
+	VkResult e = vkAcquireNextImageKHR(m_device, m_swapchain, 1000000000,
+		getCurrentFrame().swapchainSemaphore, nullptr, &swapchainImageIndex);
+	if (e == VK_ERROR_OUT_OF_DATE_KHR) {
+		m_resizeRequested = true;
+		return;
+	}
+	//VK_CHECK(vkAcquireNextImageKHR(m_device, m_swapchain, 1000000000, 
+	//	getCurrentFrame().swapchainSemaphore, nullptr, &swapchainImageIndex));
 
 	//naming it cmd for shorter writing
 	VkCommandBuffer cmd = getCurrentFrame().commandBuffer;
@@ -48,8 +49,8 @@ void View::draw() {
 	VkCommandBufferBeginInfo cmdBeginInfo 
 		= vkinit::commandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	m_drawExtent.width = m_drawImage.imageExtent.width;
-	m_drawExtent.height = m_drawImage.imageExtent.height;
+	m_drawExtent.width = std::min(m_swapchainExtent.width, m_drawImage.imageExtent.width) * m_renderScale;
+	m_drawExtent.height = std::min(m_swapchainExtent.height, m_drawImage.imageExtent.height) * m_renderScale;
 
 	//start the command buffer recording
 	VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
@@ -122,7 +123,11 @@ void View::draw() {
 
 	presentInfo.pImageIndices = &swapchainImageIndex;
 
-	VK_CHECK(vkQueuePresentKHR(m_graphicsQueue, &presentInfo));
+	//VK_CHECK(vkQueuePresentKHR(m_graphicsQueue, &presentInfo));
+	VkResult presentResult = vkQueuePresentKHR(m_graphicsQueue, &presentInfo);
+	if (presentResult == VK_ERROR_OUT_OF_DATE_KHR) {
+		m_resizeRequested = true;
+	}
 
 	//increase the number of frames drawn
 	m_frameNumber++;
@@ -231,7 +236,9 @@ void View::drawImgui(VkCommandBuffer _cmd, VkImageView _targetImageView) {
 
 void View::initialize() {
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(
+			SDL_WINDOW_VULKAN
+			| SDL_WINDOW_RESIZABLE);
 
 	m_window = SDL_CreateWindow(
 		"Vulkan Engine",
@@ -397,6 +404,20 @@ void View::createSwapchain(uint32_t _width, uint32_t _height) {
 	m_swapchain = vkbSwapchain.swapchain;
 	m_swapchainImages = vkbSwapchain.get_images().value();
 	m_swapchainImageViews = vkbSwapchain.get_image_views().value();
+}
+
+void View::resizeSwapchain() {
+	vkDeviceWaitIdle(m_device);
+	destroySwapchain();
+
+	int w = 0;
+	int h = 0;
+	SDL_GetWindowSize(m_window, &w, &h);
+	m_windowExtent.width = w;
+	m_windowExtent.height = h;
+
+	createSwapchain(m_windowExtent.width, m_windowExtent.height);
+	m_resizeRequested = false;
 }
 
 void View::destroySwapchain() {
@@ -820,6 +841,8 @@ void View::newFrame() {
 	if (ImGui::Begin("background")) {
 
 		ComputeEffect &selected = m_backgroundEffects[m_currentBackgroundEffect];
+
+		ImGui::SliderFloat("Render Scale", &m_renderScale, 0.3f, 1.0f);
 
 		ImGui::Text("Selected effect: ", selected.name);
 
