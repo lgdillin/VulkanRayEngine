@@ -154,6 +154,7 @@
     <None Include="color_triangle.vert" />
     <None Include="color_triangle_mesh.vert" />
     <None Include="exampleRenderLoop.md" />
+    <None Include="floor_ceiling.comp" />
     <None Include="gradient_color.comp" />
     <None Include="shader1.frag" />
     <None Include="shader1.vert" />

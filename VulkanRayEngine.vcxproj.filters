@@ -95,6 +95,7 @@
     <None Include="color_triangle_mesh.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="floor_ceiling.comp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="View_old.hpp">

@@ -550,7 +550,7 @@ void View::initBackgroundPipelines() {
 
 	//layout code
 	VkShaderModule gradientShader;
-	if (!vkutil::loadShaderModule("./gradient_color.spv", m_device, &gradientShader)) {
+	if (!vkutil::loadShaderModule("./floor_ceiling.comp.spv", m_device, &gradientShader)) {
 		std::cout << "Error when building the compute shader \n";
 	}
 

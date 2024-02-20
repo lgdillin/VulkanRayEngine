@@ -20,5 +20,7 @@ public:
 
 	int m_mousex;
 	int m_mousey;
+	float m_px;
+	float m_py;
 private:
 };
