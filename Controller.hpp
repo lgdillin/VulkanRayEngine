@@ -1,7 +1,11 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include "View.hpp"
 #include "Game.hpp"
+
+constexpr float PI = 3.1415926;
 
 class Controller {
 public:

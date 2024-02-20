@@ -40,13 +40,32 @@ void Controller::update() {
 
 void Controller::keyDown(SDL_KeyboardEvent *_event) {
 	if (_event->repeat == 0) {
-		if (_event->keysym.scancode == SDL_SCANCODE_UP) {
-			std::cout << "Up pressed" << std::endl;
-			//if (m_view->m_shaderMode == 0) {
-			//	m_view->m_shaderMode = 1;
-			//} else if (m_view->m_shaderMode == 1) {
-			//	m_view->m_shaderMode = 0;
-			//}
+		if (_event->keysym.scancode == SDL_SCANCODE_W) {
+			m_game->m_px += m_game->m_pdx;
+			m_game->m_py += m_game->m_pdy;
+		}
+
+		if (_event->keysym.scancode == SDL_SCANCODE_S) {
+			m_game->m_px -= m_game->m_pdx;
+			m_game->m_py -= m_game->m_pdy;
+		}
+
+		if (_event->keysym.scancode == SDL_SCANCODE_A) {
+			m_game->m_pa -= 0.1f;
+			if (m_game->m_pa < 0.0f) {
+				m_game->m_pa += 2 * PI;
+			}
+			m_game->m_pdx = glm::cos(m_game->m_pa) * 5;
+			m_game->m_pdy = glm::sin(m_game->m_pa) * 5;
+		}
+
+		if (_event->keysym.scancode == SDL_SCANCODE_D) {
+			m_game->m_pa += 0.1f;
+			if (m_game->m_pa > 2 * PI) {
+				m_game->m_pa -= 2 * PI;
+			}
+			m_game->m_pdx = glm::cos(m_game->m_pa) * 5;
+			m_game->m_pdy = glm::sin(m_game->m_pa) * 5;
 		}
 	}
 }

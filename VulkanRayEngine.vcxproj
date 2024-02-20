@@ -145,7 +145,9 @@
     <ClCompile Include="imgui_tables.cpp" />
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="old_Code.cpp" />
     <ClCompile Include="View.cpp" />
+    <ClCompile Include="ViewInit.cpp" />
     <ClCompile Include="View_old.cpp" />
     <ClCompile Include="VkBoostrap.cpp" />
   </ItemGroup>
@@ -180,6 +182,7 @@
     <ClInclude Include="Triangle.hpp" />
     <ClInclude Include="VideoSettings.hpp" />
     <ClInclude Include="View.hpp" />
+    <ClInclude Include="ViewInit.hpp" />
     <ClInclude Include="View_old.hpp" />
     <ClInclude Include="VkBootstrapDispatch.h" />
     <ClInclude Include="VkBootstrap.h" />

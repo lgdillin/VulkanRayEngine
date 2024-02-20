@@ -11,6 +11,7 @@
 
 #include "Game.hpp"
 #include "View.hpp"
+#include "ViewInit.hpp"
 #include "Controller.hpp"
 
 
@@ -42,6 +43,7 @@ int main(int argc, char *argv[]) {
 	Controller controller(game);
 
 	View view(game);
+	ViewInit viewInit(view);
 	view.initialize();
 
 	controller.setView(view);

@@ -66,6 +66,12 @@
     <ClCompile Include="imgui_widgets.cpp">
       <Filter>Source Files\ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="old_Code.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ViewInit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="exampleRenderLoop.md">
@@ -95,7 +101,9 @@
     <None Include="color_triangle_mesh.vert">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="floor_ceiling.comp" />
+    <None Include="floor_ceiling.comp">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="View_old.hpp">
@@ -162,6 +170,9 @@
       <Filter>Header Files\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="Loader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ViewInit.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
