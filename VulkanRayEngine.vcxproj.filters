@@ -169,9 +169,6 @@
     <ClInclude Include="imstb_truetype.h">
       <Filter>Header Files\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="Loader.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ViewInit.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

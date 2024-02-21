@@ -28,9 +28,11 @@ public:
 
 	// swapchain
 	void initSwapchain();
-	void createSwapchain(uint32_t _width, uint32_t _height);
-	void resizeSwapchain();
-	void destroySwapchain();
+	void createSwapchain(uint32_t _width, uint32_t _height) {
+		m_view->createSwapchain(_width, _height); }
+
+	void resizeSwapchain() { m_view->resizeSwapchain(); }
+	void destroySwapchain() { m_view->destroySwapchain(); }
 	void initCommands();
 	void initSyncStructures();
 
@@ -38,11 +40,11 @@ public:
 	void initDescriptors();
 
 	// pipeline
-	void initPipelines();
-	void initBackgroundPipelines();
+	//void initPipelines();
+	//void initBackgroundPipelines();
 
 	// immediate submit
-	void immediateSubmit(std::function<void(VkCommandBuffer cmd)> &&_function);
+	//void immediateSubmit(std::function<void(VkCommandBuffer cmd)> &&_function);
 	void initImgui();
 
 	View *m_view;

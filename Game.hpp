@@ -6,6 +6,8 @@
 
 #include "Triangle.hpp"
 
+constexpr int MAP_WIDTH = 8;
+constexpr int MAP_HEIGHT = 8;
 constexpr int m_map[] = {
 		1,1,1,1,1,1,1,1,
 		1,0,1,0,0,0,0,1,

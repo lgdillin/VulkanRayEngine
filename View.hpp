@@ -20,11 +20,14 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_vulkan.h"
 
+constexpr float PI = 3.1415926;
+
 class View {
 public:
 	View(Game &_game);
 	~View();
 
+	void drawRays();
 	void draw();
 	void drawGeometry(VkCommandBuffer _cmd);
 	void drawBackground();
@@ -97,22 +100,10 @@ public:
 	void imguiEventProcessing(SDL_Event *_event) {ImGui_ImplSDL2_ProcessEvent(_event);}
 	std::vector<ComputeEffect> m_backgroundEffects;
 	int m_currentBackgroundEffect{ 0 };
-private:
-	// core
-	void initVulkan();
 
-	// swapchain
-	void initSwapchain();
 	void createSwapchain(uint32_t _width, uint32_t _height);
-public:
 	void resizeSwapchain();
-private:
 	void destroySwapchain();
-	void initCommands();
-	void initSyncStructures();
-
-	// descriptors
-	void initDescriptors();
 
 	// pipeline
 	void initPipelines();
@@ -126,10 +117,8 @@ private:
 	AllocatedBuffer createBuffer(size_t _allocSize, VkBufferUsageFlags _usage, VmaMemoryUsage _memoryUsage);
 	void destroyBuffer(const AllocatedBuffer &_buffer) {vmaDestroyBuffer(m_allocator, _buffer.buffer, _buffer.allocation);}
 
-public:
 	// mesh
 	GPUMeshBuffers uploadMesh(std::span<uint32_t> _indices, std::span<Vertex> _vertices);
-private:
 
 	// cleanup
 	void cleanup();

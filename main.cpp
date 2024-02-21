@@ -82,31 +82,39 @@ int main(int argc, char *argv[]) {
 }
 
 int main11() {
-	VkApplicationInfo appInfo = {};
-	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "Vulkan Version Query";
-	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.pEngineName = "No Engine";
-	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
-
-	VkInstanceCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	createInfo.pApplicationInfo = &appInfo;
-
 	VkInstance instance;
-	VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
-	if (result != VK_SUCCESS) {
-		std::cerr << "Failed to create Vulkan instance" << std::endl;
+	VkPhysicalDevice physicalDevice;
+
+	// Create Vulkan instance
+	VkInstanceCreateInfo createInfo = {};
+	// Fill in createInfo...
+	vkCreateInstance(&createInfo, nullptr, &instance);
+
+	// Enumerate physical devices
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+	if (deviceCount == 0) {
+		std::cerr << "No physical devices found." << std::endl;
 		return -1;
 	}
+	std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, physicalDevices.data());
 
-	// Query Vulkan runtime version
-	uint32_t apiVersion;
-	vkEnumerateInstanceVersion(&apiVersion);
-	std::cout << "Vulkan Runtime Version: " << VK_VERSION_MAJOR(apiVersion) << "." << VK_VERSION_MINOR(apiVersion) << "." << VK_VERSION_PATCH(apiVersion) << std::endl;
+	// Select the first physical device
+	physicalDevice = physicalDevices[0];
 
-	// Clean up
+	// Query physical device properties
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+
+	// Output API version
+	uint32_t apiVersion = deviceProperties.apiVersion;
+	std::cout << "API Version Supported by Physical Device: "
+		<< VK_VERSION_MAJOR(apiVersion) << "."
+		<< VK_VERSION_MINOR(apiVersion) << "."
+		<< VK_VERSION_PATCH(apiVersion) << std::endl;
+
+	// Cleanup
 	vkDestroyInstance(instance, nullptr);
 
 	return 0;

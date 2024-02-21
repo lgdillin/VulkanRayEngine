@@ -175,7 +175,6 @@
     <ClInclude Include="imstb_rectpack.h" />
     <ClInclude Include="imstb_textedit.h" />
     <ClInclude Include="imstb_truetype.h" />
-    <ClInclude Include="Loader.hpp" />
     <ClInclude Include="PipelineBuilder.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Structs.hpp" />

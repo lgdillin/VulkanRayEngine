@@ -14,6 +14,66 @@ View::~View() {
 	cleanup();
 }
 
+void View::drawRays() {
+	int r;
+	int mapx;
+	int mapy;
+	int mapArrayPos;
+	int depthOfField;
+	float px = m_game->m_px;
+	float py = m_game->m_py;
+
+	float rayFirstHorizontal_x;
+	float rayFirstVertical_y; 
+	float rayAngle; 
+	float rayOffset_x; 
+	float rayOffset_y;
+
+	rayAngle = m_game->m_pa; // set ray angle to player's angle
+	for (r = 0; r < 1; r++) {
+		depthOfField = 0;
+		// check horizontal lines
+		float aTan = -1 / glm::tan(rayAngle);
+		if (rayAngle > PI) {
+			// if the ray angle is > 180 degrees, looking down
+			// round to the nearest 64th value
+			rayFirstVertical_y = (((int)py >> 6) << 6) - 0.0001;
+			rayFirstHorizontal_x = (py - rayFirstVertical_y) * aTan + px;
+			rayOffset_y = -64;
+			rayOffset_x = -rayOffset_y * aTan;
+		}
+
+		if (rayAngle < PI) {
+			// round to the nearest 64th value
+			rayFirstVertical_y = (((int)py >> 6) << 6) + 64;
+			rayFirstHorizontal_x = (py - rayFirstVertical_y) * aTan + px;
+			rayOffset_y = 64;
+			rayOffset_x = -rayOffset_y * aTan;
+		}
+
+		if (rayAngle == 0 || rayAngle == PI) {
+			rayFirstHorizontal_x = px;
+			rayFirstVertical_y = py;
+			depthOfField = 8;
+		}
+
+		while (depthOfField < 8) {
+			mapx = (int)(rayFirstHorizontal_x) >> 6;
+			mapy = (int)(rayFirstVertical_y) >> 6;
+			mapArrayPos = mapy * MAP_WIDTH + mapx;
+
+			if (mapArrayPos < MAP_WIDTH * MAP_HEIGHT // in bounds
+				&& m_map[mapArrayPos] == 1 // hit a wall
+			) {
+				depthOfField = 8; 
+			} else {
+				rayFirstHorizontal_x += rayOffset_x;
+				rayFirstVertical_y += rayOffset_y;
+			}
+		}
+	}
+}
+
 void View::draw() {
 	//check if window is minimized and skip drawing
 	if (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED)
@@ -239,63 +299,12 @@ void View::drawImgui(VkCommandBuffer _cmd, VkImageView _targetImageView) {
 }
 
 void View::initialize() {
-
-	initSwapchain();
-	initCommands();
-	initSyncStructures();
-	initDescriptors();
 	initPipelines();
-	initImgui();
+	//initImgui();
 
 	initDefaultData();
 
 	m_initialized = true;
-}
-
-void View::initSwapchain() {
-	createSwapchain(m_windowExtent.width, m_windowExtent.height);
-
-	//draw image size will match the window
-	VkExtent3D drawImageExtent = {
-		m_windowExtent.width,
-		m_windowExtent.height,
-		1
-	};
-
-	//hardcoding the draw format to 32 bit float
-	m_drawImage.imageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
-	m_drawImage.imageExtent = drawImageExtent;
-
-	VkImageUsageFlags drawImageUsages{};
-	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-	drawImageUsages |= VK_IMAGE_USAGE_STORAGE_BIT;
-	drawImageUsages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	VkImageCreateInfo rimg_info = vkinit::imageCreateInfo(m_drawImage.imageFormat, 
-		drawImageUsages, drawImageExtent);
-
-	//for the draw image, we want to allocate it from gpu local memory
-	VmaAllocationCreateInfo rimg_allocinfo = {};
-	rimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-	rimg_allocinfo.requiredFlags = VkMemoryPropertyFlags(
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	//allocate and create the image
-	vmaCreateImage(m_allocator, &rimg_info, &rimg_allocinfo, 
-		&m_drawImage.image, &m_drawImage.allocation, nullptr);
-
-	//build a image-view for the draw image to use for rendering
-	VkImageViewCreateInfo rview_info = vkinit::imageviewCreateInfo(
-		m_drawImage.imageFormat, m_drawImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
-
-	VK_CHECK(vkCreateImageView(m_device, &rview_info, nullptr, &m_drawImage.imageView));
-
-	//add to deletion queues
-	m_deletionQueue.push_function([=]() {
-		vkDestroyImageView(m_device, m_drawImage.imageView, nullptr);
-		vmaDestroyImage(m_allocator, m_drawImage.image, m_drawImage.allocation);
-		});
 }
 
 void View::createSwapchain(uint32_t _width, uint32_t _height) {
@@ -346,97 +355,6 @@ void View::destroySwapchain() {
 	}
 }
 
-void View::initCommands() {
-	//create a command pool for commands submitted to the graphics queue.
-	//we also want the pool to allow for resetting of individual command buffers
-	VkCommandPoolCreateInfo commandPoolInfo = vkinit::commandPoolCreateInfo(
-		m_graphicsQueueFamily, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-
-	VK_CHECK(vkCreateCommandPool(m_device, &commandPoolInfo, nullptr,
-		&m_immCommandPool));
-
-	// allocate the command buffer for immediate submits
-	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::commandBufferAllocateInfo(
-		m_immCommandPool, 1);
-
-	VK_CHECK(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_immCommandBuffer));
-
-	m_deletionQueue.push_function([=]() {
-		vkDestroyCommandPool(m_device, m_immCommandPool, nullptr);
-	});
-
-	for (int i = 0; i < FRAME_OVERLAP; i++) {
-
-		VK_CHECK(vkCreateCommandPool(m_device, &commandPoolInfo, nullptr, &m_frames[i].commandPool));
-
-		// allocate the default command buffer that we will use for rendering
-		VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::commandBufferAllocateInfo(
-			m_frames[i].commandPool, 1);
-
-		VK_CHECK(vkAllocateCommandBuffers(m_device, &cmdAllocInfo, &m_frames[i].commandBuffer));
-	}
-}
-
-void View::initSyncStructures() {
-	//create syncronization structures
-	//one fence to control when the gpu has finished rendering the frame,
-	//and 2 semaphores to syncronize rendering with swapchain
-	//we want the fence to start signalled so we can wait on it on the first frame
-	VkFenceCreateInfo fenceCreateInfo = vkinit::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-	VkSemaphoreCreateInfo semaphoreCreateInfo = vkinit::semaphoreCreateInfo(0);
-
-	for (int i = 0; i < FRAME_OVERLAP; i++) {
-		VK_CHECK(vkCreateFence(m_device, &fenceCreateInfo, nullptr, 
-			&m_frames[i].renderFence));
-
-		VK_CHECK(vkCreateSemaphore(m_device, &semaphoreCreateInfo, nullptr, 
-			&m_frames[i].swapchainSemaphore));
-		VK_CHECK(vkCreateSemaphore(m_device, &semaphoreCreateInfo, nullptr, 
-			&m_frames[i].renderSemaphore));
-	}
-
-	VK_CHECK(vkCreateFence(m_device, &fenceCreateInfo, nullptr, &m_immFence));
-	m_deletionQueue.push_function([=]() {
-		vkDestroyFence(m_device, m_immFence, nullptr);
-		});
-}
-
-void View::initDescriptors() {
-	//create a descriptor pool that will hold 10 sets with 1 image each
-	std::vector<DescriptorAllocator::PoolSizeRatio> sizes = {
-		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
-	};
-
-	m_globalDescriptorAllocator.init_pool(m_device, 10, sizes);
-
-	//make the descriptor set layout for our compute draw
-	{
-		DescriptorLayoutBuilder builder;
-		builder.add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
-		m_drawImageDescriptorLayout = builder.build(m_device, 
-			VK_SHADER_STAGE_COMPUTE_BIT);
-	}
-
-	//allocate a descriptor set for our draw image
-	m_drawImageDescriptors = m_globalDescriptorAllocator.allocate(m_device, 
-		m_drawImageDescriptorLayout);
-
-	VkDescriptorImageInfo imgInfo{};
-	imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	imgInfo.imageView = m_drawImage.imageView;
-
-	VkWriteDescriptorSet drawImageWrite = {};
-	drawImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	drawImageWrite.pNext = nullptr;
-
-	drawImageWrite.dstBinding = 0;
-	drawImageWrite.dstSet = m_drawImageDescriptors;
-	drawImageWrite.descriptorCount = 1;
-	drawImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	drawImageWrite.pImageInfo = &imgInfo;
-
-	vkUpdateDescriptorSets(m_device, 1, &drawImageWrite, 0, nullptr);
-}
 
 void View::initPipelines() {
 	initBackgroundPipelines();
@@ -554,90 +472,7 @@ void View::immediateSubmit(std::function<void(VkCommandBuffer cmd)> &&_function)
 }
 
 void View::initImgui() {
-	// 1: create descriptor pool for IMGUI
-	//  the size of the pool is very oversize, but it's copied from imgui demo
-	//  itself.
-	VkDescriptorPoolSize pool_sizes[] = { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 } };
 
-	VkDescriptorPoolCreateInfo pool_info = {};
-	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	pool_info.maxSets = 1000;
-	pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
-	pool_info.pPoolSizes = pool_sizes;
-
-	VkDescriptorPool imguiPool;
-	VK_CHECK(vkCreateDescriptorPool(m_device, &pool_info, nullptr, &imguiPool));
-
-	// 2: initialize imgui library
-
-	// this initializes the core structures of imgui
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO &io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
-
-	ImGui::StyleColorsDark();
-	ImGuiStyle &style = ImGui::GetStyle();
-	//if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-	//	style.WindowRounding = 0.0f;
-	//	style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-	//}
-
-	// this initializes imgui for SDL
-	ImGui_ImplSDL2_InitForVulkan(m_window);
-
-	// this initializes imgui for Vulkan
-	ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.Instance = m_instance;
-	init_info.PhysicalDevice = m_gpu;
-	init_info.Device = m_device;
-	init_info.Queue = m_graphicsQueue;
-	init_info.QueueFamily = m_graphicsQueueFamily;
-	init_info.DescriptorPool = imguiPool;
-	init_info.MinImageCount = 3;
-	init_info.ImageCount = 3;
-	
-	init_info.UseDynamicRendering = true;
-	init_info.ColorAttachmentFormat = m_swapchainImageFormat;
-	//init_info.PipelineRenderingCreateInfo = {};
-	//init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-	//init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &m_swapchainImageFormat;
-	//init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = m_swapchainImageFormat;
-
-	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-	//init_info.Allocator = m_allocator;
-
-	ImGui_ImplVulkan_Init(&init_info, VK_NULL_HANDLE);
-
-	// execute a gpu command to upload imgui font textures
-	ImGui_ImplVulkan_CreateFontsTexture();
-	//immediateSubmit([&](VkCommandBuffer cmd) { 
-	//	ImGui_ImplVulkan_CreateFontsTexture(); 
-	//});
-
-	// clear font textures from cpu data
-	//ImGui_ImplVulkan_
-	//ImGui_ImplVulkan_DestroyFontsTexture();
-
-	// add the destroy the imgui created structures
-	m_deletionQueue.push_function([=]() {
-		vkDestroyDescriptorPool(m_device, imguiPool, nullptr);
-		ImGui_ImplVulkan_Shutdown();
-		});
 }
 
 AllocatedBuffer View::createBuffer(size_t _allocSize, 
