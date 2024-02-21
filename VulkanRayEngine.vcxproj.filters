@@ -25,6 +25,12 @@
     <Filter Include="Source Files\ImGui">
       <UniqueIdentifier>{15de0c83-6f3d-4f09-84da-4bc1b6669c31}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\misc">
+      <UniqueIdentifier>{3613f1b8-ce23-4474-81fe-c05fd988aa30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\notes">
+      <UniqueIdentifier>{068b4c0e-dc14-40be-8c6c-50fb93743ce6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -39,7 +45,7 @@
     <ClCompile Include="Controller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="View.cpp">
+    <ClCompile Include="View1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VkBoostrap.cpp">
@@ -72,11 +78,17 @@
     <ClCompile Include="ViewInit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VreDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="View.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="exampleRenderLoop.md">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="shader1.frag">
       <Filter>Resource Files</Filter>
     </None>
@@ -104,11 +116,16 @@
     <None Include="floor_ceiling.comp">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="dot_shader.vert" />
+    <None Include="common_datatypes_for_vertex_buffers.txt">
+      <Filter>Resource Files\notes</Filter>
+    </None>
+    <None Include="exampleRenderLoop.md">
+      <Filter>Resource Files\notes</Filter>
+    </None>
+    <None Include="dot_shader.frag" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="View_old.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Game.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -130,13 +147,7 @@
     <ClInclude Include="Structs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="View.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoSettings.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Headers.hpp">
+    <ClInclude Include="View1.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VkBootstrapDispatch.h">
@@ -170,6 +181,27 @@
       <Filter>Header Files\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="ViewInit.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="View_old.hpp">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoSettings.hpp">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers.hpp">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Dot.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pipeline.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VreDevice.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="View.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -70,8 +70,16 @@ public:
 
 
         //completely clear VertexInputStateCreateInfo, as we have no need for it
-        VkPipelineVertexInputStateCreateInfo vertexInputInfo = { 
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+        auto bindingDescriptions = Vertex2::getBindingDescriptions();
+        auto attributeDescriptions = Vertex2::getAttributeDescriptions();
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.vertexAttributeDescriptionCount = 
+            static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.vertexBindingDescriptionCount =
+            static_cast<uint32_t>(bindingDescriptions.size());
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+        vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
     
         // build the actual pipeline
         // we now use all of the info structs we have been writing into into this one

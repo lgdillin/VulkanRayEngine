@@ -9,6 +9,9 @@
 #include <deque>
 #include <functional>
 
+#include "Headers.hpp"
+#include "VideoSettings.hpp"
+
 struct DeletionQueue {
 	std::deque<std::function<void()>> deletors;
 
@@ -199,4 +202,26 @@ struct MeshAsset {
 	std::string name;
 	std::vector<GeoSurface> surfaces;
 	GPUMeshBuffers meshBuffers;
+};
+
+
+struct Vertex2 {
+	glm::vec2 pos;
+
+	static std::vector<VkVertexInputBindingDescription> getBindingDescriptions() {
+		std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
+		bindingDescriptions[0].binding = 0;
+		bindingDescriptions[0].stride = sizeof(Vertex2);
+		bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		return bindingDescriptions;
+	}
+
+	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() {
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(1);
+		attributeDescriptions[0].binding = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].offset = 0;
+		return attributeDescriptions;
+	}
 };

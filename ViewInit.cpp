@@ -1,3 +1,4 @@
+/*
 #include "ViewInit.hpp"
 
 ViewInit::ViewInit(View &_view) : m_view(&_view) {
@@ -325,3 +326,4 @@ void ViewInit::initImgui() {
 		ImGui_ImplVulkan_Shutdown();
 		});
 }
+*/

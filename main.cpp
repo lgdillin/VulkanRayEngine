@@ -43,8 +43,8 @@ int main(int argc, char *argv[]) {
 	Controller controller(game);
 
 	View view(game);
-	ViewInit viewInit(view);
-	view.initialize();
+	//ViewInit viewInit(view);
+	//view.initialize();
 
 	controller.setView(view);
 
@@ -60,20 +60,20 @@ int main(int argc, char *argv[]) {
 		controller.update();
 
 		// act if we are minimized
-		if (view.m_stopRendering) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			continue;
-		}
+		//if (view.m_stopRendering) {
+		//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//	continue;
+		//}
 
 		game.update();
 
-		if (view.m_resizeRequested) {
-			view.resizeSwapchain();
-		}
+		//if (view.m_resizeRequested) {
+		//	view.resizeSwapchain();
+		//}
 
 		// updating
-		view.newFrame();
-		view.draw();
+		//view.newFrame();
+		//view.draw();
 
 		calculateFPS(&view);
 	}
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-int main11() {
+int main1() {
 	VkInstance instance;
 	VkPhysicalDevice physicalDevice;
 

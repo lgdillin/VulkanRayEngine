@@ -256,6 +256,62 @@ namespace vkinit {
 
         return info;
     }
+
+    static uint32_t findMemoryType(
+        VkPhysicalDevice _gpu,
+        uint32_t _typeFilter,
+        VkMemoryPropertyFlags _props
+    ) {
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties(_gpu, &memProperties);
+
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            if ((_typeFilter & (1 << i)) 
+                && (memProperties.memoryTypes[i].propertyFlags & _props) == _props) {
+                return i;
+            }
+        }
+
+        throw std::runtime_error("Failed to find suitable memory type!");
+    }
+
+    static void createBuffer(
+        VkDevice _device,
+        VkPhysicalDevice _gpu,
+        VkDeviceSize _size,
+        VkBufferUsageFlags _usage,
+        VkMemoryPropertyFlags _props,
+        VkBuffer &_buffer,
+        VkDeviceMemory &_bufferMemory
+    ) {
+        // Create buffer
+        VkBufferCreateInfo bufferInfo = {};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = _size;
+        bufferInfo.usage = _usage;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (vkCreateBuffer(_device, &bufferInfo, nullptr, &_buffer) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create buffer!");
+        }
+
+        // Allocate memory for buffer
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(_device, _buffer, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = findMemoryType(_gpu, 
+            memRequirements.memoryTypeBits, _props);
+
+        if (vkAllocateMemory(_device, &allocInfo, nullptr, &_bufferMemory) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to allocate buffer memory!");
+        }
+
+        // Bind buffer memory
+        vkBindBufferMemory(_device, _buffer, _bufferMemory, 0);
+    }
 }
 
 namespace vkutil {

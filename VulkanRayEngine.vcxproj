@@ -146,15 +146,21 @@
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="old_Code.cpp" />
+    <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="View.cpp" />
+    <ClCompile Include="View1.cpp" />
     <ClCompile Include="ViewInit.cpp" />
     <ClCompile Include="View_old.cpp" />
     <ClCompile Include="VkBoostrap.cpp" />
+    <ClCompile Include="VreDevice.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="color_triangle.frag" />
     <None Include="color_triangle.vert" />
     <None Include="color_triangle_mesh.vert" />
+    <None Include="common_datatypes_for_vertex_buffers.txt" />
+    <None Include="dot_shader.frag" />
+    <None Include="dot_shader.vert" />
     <None Include="exampleRenderLoop.md" />
     <None Include="floor_ceiling.comp" />
     <None Include="gradient_color.comp" />
@@ -165,6 +171,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller.hpp" />
+    <ClInclude Include="View.hpp" />
+    <ClInclude Include="VreDevice.hpp" />
+    <ClInclude Include="Dot.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="Headers.hpp" />
     <ClInclude Include="imconfig.h" />
@@ -175,12 +184,13 @@
     <ClInclude Include="imstb_rectpack.h" />
     <ClInclude Include="imstb_textedit.h" />
     <ClInclude Include="imstb_truetype.h" />
+    <ClInclude Include="Pipeline.hpp" />
     <ClInclude Include="PipelineBuilder.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Structs.hpp" />
     <ClInclude Include="Triangle.hpp" />
     <ClInclude Include="VideoSettings.hpp" />
-    <ClInclude Include="View.hpp" />
+    <ClInclude Include="View1.hpp" />
     <ClInclude Include="ViewInit.hpp" />
     <ClInclude Include="View_old.hpp" />
     <ClInclude Include="VkBootstrapDispatch.h" />

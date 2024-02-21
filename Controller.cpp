@@ -16,7 +16,7 @@ void Controller::update() {
 	}
 
 	while (SDL_PollEvent(&event)) {
-		ImGui_ImplSDL2_ProcessEvent(&event);
+		//ImGui_ImplSDL2_ProcessEvent(&event);
 
 		switch (event.type) {
 		case SDL_KEYDOWN:
@@ -27,9 +27,9 @@ void Controller::update() {
 			break;
 		case SDL_WINDOWEVENT:
 			if (event.window.event == SDL_WINDOWEVENT_MINIMIZED)
-				m_view->m_stopRendering = true;
+				//m_view->m_stopRendering = true;
 			if (event.window.event == SDL_WINDOWEVENT_RESTORED)
-				m_view->m_stopRendering = false;
+				//m_view->m_stopRendering = false;
 			break;
 		case SDL_QUIT:
 			exit(0);

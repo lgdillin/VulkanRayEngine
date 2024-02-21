@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include <vector>
@@ -49,3 +50,4 @@ public:
 
 	View *m_view;
 };
+*/
