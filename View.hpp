@@ -14,6 +14,8 @@ public:
 	View(Game &_game);
 	~View();
 
+	void update();
+
 	SDL_Window *getWindow() { return m_window; }
 private:
 	Game *m_game;

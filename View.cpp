@@ -4,7 +4,7 @@ View::View(Game &_game) : m_game(&_game) {
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(
 		SDL_WINDOW_VULKAN
-		| SDL_WINDOW_RESIZABLE);
+		| SDL_WINDOW_SHOWN);
 
 	m_window = SDL_CreateWindow(
 		"Vulkan Engine",
@@ -19,4 +19,8 @@ View::View(Game &_game) : m_game(&_game) {
 }
 
 View::~View() {
+}
+
+void View::update() {
+
 }

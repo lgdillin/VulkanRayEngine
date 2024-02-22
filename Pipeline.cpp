@@ -1,6 +1,9 @@
 #include "Pipeline.hpp"
 
-void vre::Pipeline::createGraphicsPipeline() {
+vre::Pipeline::Pipeline(
+    VkDevice &_device, 
+    const PipelineConfigInfo &_info
+) : m_device(_device) {
 
 }
 

@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
 		// updating
 		//view.newFrame();
 		//view.draw();
+		view.update();
 
 		calculateFPS(&view);
 	}
