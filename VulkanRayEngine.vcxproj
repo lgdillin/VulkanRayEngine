@@ -159,8 +159,8 @@
     <None Include="color_triangle.vert" />
     <None Include="color_triangle_mesh.vert" />
     <None Include="common_datatypes_for_vertex_buffers.txt" />
-    <None Include="dot_shader.frag" />
-    <None Include="dot_shader.vert" />
+    <None Include="triangle.frag" />
+    <None Include="triangle.vert" />
     <None Include="exampleRenderLoop.md" />
     <None Include="floor_ceiling.comp" />
     <None Include="gradient_color.comp" />

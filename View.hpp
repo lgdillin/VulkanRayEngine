@@ -6,6 +6,7 @@
 
 #include "VideoSettings.hpp"
 #include "VreDevice.hpp"
+#include "Pipeline.hpp"
 #include "Game.hpp"
 
 class View {
@@ -21,4 +22,7 @@ private:
 	Game *m_game;
 	SDL_Window *m_window;
 	vre::VreDevice m_vreDevice;
+	vre::Pipeline m_pipeline{ m_vreDevice, 
+		vre::Pipeline::defaultPipelineConfigInfo(WINDOW_WIDTH, WINDOW_HEIGHT),
+		"./triangle.vert", "./triangle.frag" };
 };

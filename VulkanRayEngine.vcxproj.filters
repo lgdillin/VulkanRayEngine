@@ -116,14 +116,14 @@
     <None Include="floor_ceiling.comp">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="dot_shader.vert" />
+    <None Include="triangle.vert" />
     <None Include="common_datatypes_for_vertex_buffers.txt">
       <Filter>Resource Files\notes</Filter>
     </None>
     <None Include="exampleRenderLoop.md">
       <Filter>Resource Files\notes</Filter>
     </None>
-    <None Include="dot_shader.frag" />
+    <None Include="triangle.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.hpp">

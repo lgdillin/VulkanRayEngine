@@ -1,10 +1,48 @@
 #include "Pipeline.hpp"
 
 vre::Pipeline::Pipeline(
-    VkDevice &_device, 
-    const PipelineConfigInfo &_info
-) : m_device(_device) {
+    vre::VreDevice &_device,
+    const PipelineConfigInfo &_info, 
+    const std::string &_vertexFile,
+    const std::string &_fragFile) : m_device(_device) {
+    createGraphicsPipeline(_vertexFile, _fragFile, _info);
+}
 
+vre::Pipeline::~Pipeline() {
+}
+
+vre::PipelineConfigInfo vre::Pipeline::defaultPipelineConfigInfo(
+    uint32_t _width, uint32_t _height
+) {
+    PipelineConfigInfo info{};
+    return info;
+}
+
+
+void vre::Pipeline::createGraphicsPipeline(
+    const std::string &_vertexFile,
+    const std::string &_fragFile,
+    const PipelineConfigInfo &_info
+) {
+    auto vertCode = readFile(_vertexFile);
+    auto fragCode = readFile(_fragFile);
+
+    std::cout << "vertex " << vertCode.size() << std::endl;
+    std::cout << "frag " << fragCode.size() << std::endl;
+}
+
+void vre::Pipeline::createShaderModule(
+    const std::vector<char> &_code, 
+    VkShaderModule *_shaderModule
+) {
+    VkShaderModuleCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    info.codeSize = _code.size();
+    info.pCode = reinterpret_cast<const uint32_t *>(_code.data());
+
+    if (vkCreateShaderModule(m_device.device(), &info, nullptr, _shaderModule) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to create shader module");
+    }
 }
 
 std::vector<char> vre::Pipeline::readFile(const std::string &_file) {
