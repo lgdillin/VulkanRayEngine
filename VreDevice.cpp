@@ -7,7 +7,8 @@ namespace vreDebug {
         VkDebugUtilsMessageTypeFlagsEXT messageType,
         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
         void *pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        std::cerr << std::endl << "=========[VALIDATION LAYER]=========" 
+            << std::endl << pCallbackData->pMessage << std::endl;
 
         return VK_FALSE;
     }
@@ -40,15 +41,26 @@ namespace vreDebug {
     }
 }
 
-vre::VreDevice::VreDevice(SDL_Window *_window) {
-    m_window = _window;
-
+vre::VreDevice::VreDevice(SDL_Window *_window) : m_window(_window) {
     createInstance();
     setupDebugMessenger();
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
     createCommandPool();
+}
+
+void vre::VreDevice::init() {
+    
+    createInstance();
+    setupDebugMessenger();
+    createSurface();
+    pickPhysicalDevice();
+    createLogicalDevice();
+    createCommandPool();
+
+    std::cout << m_device << std::endl;
+    //doStuff();
 }
 
 vre::VreDevice::~VreDevice() {
@@ -271,8 +283,19 @@ void vre::VreDevice::createInstance() {
         createInfo.pNext = nullptr;
     }
 
-    if (vkCreateInstance(&createInfo, nullptr, &m_instance) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create instance!");
+    VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
+    //if (vkCreateInstance(&createInfo, nullptr, &m_instance) != VK_SUCCESS) {
+    //    throw std::runtime_error("failed to create instance!");
+    //}
+
+    if (result == VK_ERROR_LAYER_NOT_PRESENT) {
+        std::cerr << "Validation layers requested, but not available!" << std::endl;
+    }
+    else if (result != VK_SUCCESS) {
+        std::cerr << "Failed to create Vulkan instance!" << std::endl;
+    }
+    else {
+        std::cout << "Vulkan instance created successfully!" << std::endl;
     }
 
     hasSDLRequiredInstanceExtensions();
@@ -482,10 +505,12 @@ void vre::VreDevice::populateDebugMessengerCreateInfo(
     _info = {};
     _info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     _info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT; 
+        //VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
     _info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
         VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
         VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        //| VK_DEBUG_UTILS_MESSAGE_TYPE_;
     _info.pfnUserCallback = vreDebug::debugCallback;
     _info.pUserData = nullptr;  // Optional
 }

@@ -146,7 +146,8 @@
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="old_Code.cpp" />
-    <ClCompile Include="Pipeline.cpp" />
+    <ClCompile Include="VrePipeline.cpp" />
+    <ClCompile Include="VreSwapchain.cpp" />
     <ClCompile Include="View.cpp" />
     <ClCompile Include="View1.cpp" />
     <ClCompile Include="ViewInit.cpp" />
@@ -159,6 +160,7 @@
     <None Include="color_triangle.vert" />
     <None Include="color_triangle_mesh.vert" />
     <None Include="common_datatypes_for_vertex_buffers.txt" />
+    <None Include="notes.md" />
     <None Include="triangle.frag" />
     <None Include="triangle.vert" />
     <None Include="exampleRenderLoop.md" />
@@ -171,6 +173,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller.hpp" />
+    <ClInclude Include="VreSwapchain.hpp" />
     <ClInclude Include="View.hpp" />
     <ClInclude Include="VreDevice.hpp" />
     <ClInclude Include="Dot.hpp" />
@@ -184,7 +187,7 @@
     <ClInclude Include="imstb_rectpack.h" />
     <ClInclude Include="imstb_textedit.h" />
     <ClInclude Include="imstb_truetype.h" />
-    <ClInclude Include="Pipeline.hpp" />
+    <ClInclude Include="VrePipeline.hpp" />
     <ClInclude Include="PipelineBuilder.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Structs.hpp" />
@@ -196,6 +199,7 @@
     <ClInclude Include="VkBootstrapDispatch.h" />
     <ClInclude Include="VkBootstrap.h" />
     <ClInclude Include="VkFuncs.hpp" />
+    <ClInclude Include="VreWindow.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

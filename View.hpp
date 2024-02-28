@@ -1,12 +1,19 @@
 #pragma once
 
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <stdexcept>
+
 #include <SDL2/SDL.h>
 #include <SDL2/sdl_vulkan.h>
 #include <vulkan/vulkan.h>
 
 #include "VideoSettings.hpp"
+#include "VreWindow.hpp"
 #include "VreDevice.hpp"
-#include "Pipeline.hpp"
+#include "VrePipeline.hpp"
+#include "VreSwapchain.hpp"
 #include "Game.hpp"
 
 class View {
@@ -17,12 +24,27 @@ public:
 
 	void update();
 
-	SDL_Window *getWindow() { return m_window; }
+	VkExtent2D getExtent() { return { static_cast<uint32_t>(WINDOW_WIDTH), static_cast<uint32_t>(WINDOW_HEIGHT) }; }
+
+	SDL_Window *getWindow() { return m_vreWindow.m_window; }
 private:
 	Game *m_game;
-	SDL_Window *m_window;
-	vre::VreDevice m_vreDevice;
-	vre::Pipeline m_pipeline{ m_vreDevice, 
-		vre::Pipeline::defaultPipelineConfigInfo(WINDOW_WIDTH, WINDOW_HEIGHT),
-		"./triangle.vert", "./triangle.frag" };
+	vre::VreWindow m_vreWindow{};
+	vre::VreDevice m_vreDevice{ m_vreWindow.m_window };
+	vre::VreSwapchain m_vreSwapchain{ m_vreDevice, getExtent()};
+	//vre::VrePipeline m_vrePipeline{m_vreDevice.m_device, "./triangle.vert.spv", "./triangle.frag.spv"};
+	std::unique_ptr<vre::VrePipeline> m_vrePipeline;
+	
+	VkPipelineLayout m_pipelineLayout;
+	std::vector<VkCommandBuffer> m_commandBuffers;
+	
+	void createPipelineLayout();
+	void createPipeline();
+	void createCommandBuffers();
+	void drawFrame();
+
+	//SDL_Window *m_window;
+	//std::shared_ptr<vre::VreDevice> m_vreDevice;
+	//std::shared_ptr<vre::Pipeline> m_pipeline;
+	//std::shared_ptr<vre::Swapchain> m_swapchain;
 };

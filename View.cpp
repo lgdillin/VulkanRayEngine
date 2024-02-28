@@ -1,21 +1,7 @@
 #include "View.hpp"
 
 View::View(Game &_game) : m_game(&_game) {
-	SDL_Init(SDL_INIT_VIDEO);
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(
-		SDL_WINDOW_VULKAN
-		| SDL_WINDOW_SHOWN);
 
-	m_window = SDL_CreateWindow(
-		"Vulkan Engine",
-		SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED,
-		WINDOW_WIDTH,
-		WINDOW_HEIGHT,
-		window_flags
-	);
-
-	m_vreDevice = vre::VreDevice(m_window);
 }
 
 View::~View() {
@@ -23,4 +9,29 @@ View::~View() {
 
 void View::update() {
 
+}
+
+void View::createPipelineLayout() {
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 0;
+	pipelineLayoutInfo.pSetLayouts = nullptr;
+	// push constants are an effecient way of sending
+	// a very small amount of data to our shader program
+	pipelineLayoutInfo.pushConstantRangeCount = 0;
+	pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+	if (vkCreatePipelineLayout(m_vreDevice.device(), &pipelineLayoutInfo,
+		nullptr, &m_pipelineLayout) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create pipeline layout");
+	}
+}
+
+void View::createPipeline() {
+	auto pipelineConfig = vre::VrePipeline::defaultPipelineConfigInfo(
+		m_vreSwapchain.width(), m_vreSwapchain.height());
+	pipelineConfig.renderPass = m_vreSwapchain.getRenderPass();
+	pipelineConfig.pipelineLayout = m_pipelineLayout;
+	m_vrePipeline = std::make_unique<vre::VrePipeline>(
+		m_vreDevice, "./triangle.vert.spv", "./triangle.frag.spv");
 }

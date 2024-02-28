@@ -2,6 +2,7 @@
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
 
 #include <glm/glm.hpp>
@@ -11,7 +12,6 @@
 
 #include "Game.hpp"
 #include "View.hpp"
-#include "ViewInit.hpp"
 #include "Controller.hpp"
 
 

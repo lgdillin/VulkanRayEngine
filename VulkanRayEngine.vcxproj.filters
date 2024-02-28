@@ -78,13 +78,16 @@
     <ClCompile Include="ViewInit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Pipeline.cpp">
+    <ClCompile Include="VrePipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VreDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="View.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VreSwapchain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -124,6 +127,9 @@
       <Filter>Resource Files\notes</Filter>
     </None>
     <None Include="triangle.frag" />
+    <None Include="notes.md">
+      <Filter>Resource Files\notes</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.hpp">
@@ -195,13 +201,19 @@
     <ClInclude Include="Dot.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Pipeline.hpp">
+    <ClInclude Include="VrePipeline.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VreDevice.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="View.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VreSwapchain.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VreWindow.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

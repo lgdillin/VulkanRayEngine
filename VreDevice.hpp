@@ -10,6 +10,10 @@
 #include <vulkan/vulkan.h>
 
 #include "VideoSettings.hpp"
+#include "VkBootstrap.h"
+
+#include "VkFuncs.hpp"
+#include "VreWindow.hpp"
 
 const std::vector<const char *> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 const std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
@@ -32,9 +36,12 @@ namespace vre {
 
 	class VreDevice {
 	public:
-		VreDevice() {}
 		VreDevice(SDL_Window *_window);
 		~VreDevice();
+		void init();
+		
+		VkShaderModule m_v;
+		VkShaderModule m_f;
 
 		VkCommandPool getCommandPool() { return m_commandPool; }
 		VkDevice device() { return m_device; }
@@ -79,6 +86,7 @@ namespace vre {
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 		void pickPhysicalDevice();
 
+	public:
 		VkDevice m_device;
 		void createLogicalDevice();
 
