@@ -132,6 +132,11 @@ void View::recreateSwapchain() {
 		extent = m_vreWindow.getExtent();
 		// glfwWaitEvents()
 	}
+
+	vkDeviceWaitIdle(m_vreDevice.m_device);
+	m_vreSwapchain = std::make_unique<vre::VreSwapchain>(m_vreDevice.m_device, extent);
+	createPipeline();
+
 }
 
 void View::recordCommandBuffer(int _imageIndex) {
