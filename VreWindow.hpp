@@ -13,7 +13,7 @@ namespace vre {
 			SDL_Init(SDL_INIT_VIDEO);
 			SDL_WindowFlags window_flags = (SDL_WindowFlags)(
 				SDL_WINDOW_VULKAN
-				| SDL_WINDOW_SHOWN);
+				| SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
 			m_window = SDL_CreateWindow(
 				"Vulkan Engine",
@@ -25,6 +25,16 @@ namespace vre {
 			);
 		}
 		~VreWindow() {}
+
+		VkExtent2D getExtent() { return { WINDOW_WIDTH, WINDOW_HEIGHT }; }
+
+		bool wasWindowResized() { return m_framebufferResized; }
+		void resetWindowResizedFlag() { m_framebufferResized = false; }
+		static void framebufferResizeCallback(SDL_Window *_window, int _width, int _height) {
+			//auto window = reinterpret_cast<vre::VreWindow *>()
+		}
+
+		bool m_framebufferResized = false;
 		SDL_Window *m_window;
 	};
 }

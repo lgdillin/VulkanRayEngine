@@ -31,17 +31,24 @@ private:
 	Game *m_game;
 	vre::VreWindow m_vreWindow{};
 	vre::VreDevice m_vreDevice{ m_vreWindow.m_window };
-	vre::VreSwapchain m_vreSwapchain{ m_vreDevice, getExtent()};
+	
+	//vre::VreSwapchain m_vreSwapchain{ m_vreDevice, getExtent()};
+	std::unique_ptr<vre::VreSwapchain> m_vreSwapchain;
+
 	//vre::VrePipeline m_vrePipeline{m_vreDevice.m_device, "./triangle.vert.spv", "./triangle.frag.spv"};
 	std::unique_ptr<vre::VrePipeline> m_vrePipeline;
+	std::unique_ptr<vre::VreModel> m_model;
 	
 	VkPipelineLayout m_pipelineLayout;
 	std::vector<VkCommandBuffer> m_commandBuffers;
 	
+	void loadModel();
 	void createPipelineLayout();
 	void createPipeline();
 	void createCommandBuffers();
 	void drawFrame();
+	void recreateSwapchain();
+	void recordCommandBuffer(int _imageIndex);
 
 	//SDL_Window *m_window;
 	//std::shared_ptr<vre::VreDevice> m_vreDevice;

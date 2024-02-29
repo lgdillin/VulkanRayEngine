@@ -146,12 +146,14 @@ void vre::VrePipeline::createGraphicsPipeline(
     shaderStages[1].pSpecializationInfo = nullptr;
 
     // how we interpret the vertex data
+    auto bindingDescriptions = vre::VreModel::Vertex::getBindingDescriptions();
+    auto attributeDescriptions = vre::VreModel::Vertex::getAttributeDescriptions();
     VkPipelineVertexInputStateCreateInfo vertexInfo{};
     vertexInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInfo.vertexAttributeDescriptionCount = 0;
-    vertexInfo.vertexBindingDescriptionCount = 0;
-    vertexInfo.pVertexAttributeDescriptions = nullptr;
-    vertexInfo.pVertexBindingDescriptions = nullptr;
+    vertexInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
+    vertexInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+    vertexInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 
     VkPipelineViewportStateCreateInfo viewportInfo{};
     viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

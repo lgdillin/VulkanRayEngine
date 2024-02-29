@@ -10,6 +10,7 @@
 #include "VreDevice.hpp"
 
 #include "VkFuncs.hpp"
+#include "VreModel.hpp"
 
 namespace vre {
 	struct PipelineConfigInfo {
