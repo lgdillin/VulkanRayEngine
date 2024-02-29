@@ -146,6 +146,7 @@
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="old_Code.cpp" />
+    <ClCompile Include="VreModel.cpp" />
     <ClCompile Include="VrePipeline.cpp" />
     <ClCompile Include="VreSwapchain.cpp" />
     <ClCompile Include="View.cpp" />
@@ -173,6 +174,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller.hpp" />
+    <ClInclude Include="VreModel.hpp" />
     <ClInclude Include="VreSwapchain.hpp" />
     <ClInclude Include="View.hpp" />
     <ClInclude Include="VreDevice.hpp" />

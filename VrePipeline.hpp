@@ -29,9 +29,11 @@ namespace vre {
 
 	class VrePipeline {
 	public:
-		VrePipeline(VkDevice &_device, const std::string _vertexFile,
-			const std::string _fragFile);
+		VrePipeline(VkDevice &_device, vre::PipelineConfigInfo _config,
+			const std::string _vertexFile, const std::string _fragFile);
 		~VrePipeline();
+
+		void bind(VkCommandBuffer _commandBuffer);
 
 		//PipelineConfigInfo configureDefaultPipelineInfo(uint32_t _width, uint32_t _height);
 		static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t _width, uint32_t _height);

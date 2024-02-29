@@ -2,20 +2,27 @@
 
 vre::VrePipeline::VrePipeline(
     VkDevice &_device,
+    vre::PipelineConfigInfo _config,
     const std::string _vertexFile,
     const std::string _fragFile) : m_device(_device) {
 
     m_vShader = nullptr;
     m_fShader = nullptr;
 
-    vre::PipelineConfigInfo info = vre::VrePipeline::defaultPipelineConfigInfo(WINDOW_WIDTH, WINDOW_HEIGHT);
-    createGraphicsPipeline(_vertexFile, _fragFile, info);
+    createGraphicsPipeline(_vertexFile, _fragFile, _config);
 }
 
 vre::VrePipeline::~VrePipeline() {
     vkDestroyShaderModule(m_device, m_vShader, nullptr);
     vkDestroyShaderModule(m_device, m_vShader, nullptr);
     vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
+}
+
+void vre::VrePipeline::bind(VkCommandBuffer _commandBuffer) {
+    // VK_PIPELINE_BIND_POINT_GRAPHICS specifies this pipeline as a graphics pipeline\
+    // there are also VK_PIPELINE_BIND_POINT_COMPUTE for a comptue pipeline
+    // VK_PIPELINE_BIND_POINT_RAY_TRACING for ray tracing
+    vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
 }
 
 vre::PipelineConfigInfo vre::VrePipeline::defaultPipelineConfigInfo(
