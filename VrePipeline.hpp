@@ -14,15 +14,15 @@
 
 namespace vre {
 	struct PipelineConfigInfo {
-		PipelineConfigInfo(const PipelineConfigInfo &) = delete;
-		PipelineConfigInfo &operator=(const PipelineConfigInfo &) = delete;
+		//PipelineConfigInfo(const PipelineConfigInfo &) = delete;
+		//PipelineConfigInfo &operator=(const PipelineConfigInfo &) = delete;
 
 		//VkViewport viewport;
 		//VkRect2D scissor;
 		std::vector<VkDynamicState> dynamicStateEnables;
 		VkPipelineDynamicStateCreateInfo dynamicStateInfo;
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
-		//VkPipelineViewportStateCreateInfo viewportInfo;
+		VkPipelineViewportStateCreateInfo viewportInfo;
 		VkPipelineRasterizationStateCreateInfo rasterizationInfo;
 		VkPipelineMultisampleStateCreateInfo multisampleInfo;
 		VkPipelineColorBlendAttachmentState colorBlendAttachment;
@@ -43,7 +43,7 @@ namespace vre {
 
 		//PipelineConfigInfo configureDefaultPipelineInfo(uint32_t _width, uint32_t _height);
 		//static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t _width, uint32_t _height);
-		static PipelineConfigInfo defaultPipelineConfigInfo(PipelineConfigInfo &_configInfo);
+		static void defaultPipelineConfigInfo(PipelineConfigInfo &_configInfo);
 
 		void createGraphicsPipeline(const std::string &_vertexFile,
 			const std::string &_fragFile, const PipelineConfigInfo &_info);

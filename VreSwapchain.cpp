@@ -2,12 +2,16 @@
 
 vre::VreSwapchain::VreSwapchain(VreDevice &_device, VkExtent2D _extent
 ) : m_vreDevice(_device), m_windowExtent(_extent) {
-	createSwapchain();
-	createImageViews();
-	createRenderpass();
-	createDepthResources();
-	createFramebuffers();
-	createSyncObjects();
+	init();
+}
+
+vre::VreSwapchain::VreSwapchain(VreDevice &_device, VkExtent2D _extent,
+	std::shared_ptr<VreSwapchain> _previous
+) : m_vreDevice(_device), m_windowExtent(_extent), m_oldSwapchain(_previous) {
+	init();
+
+	// clean up old swapchain since its no longer needed
+	m_oldSwapchain = nullptr;
 }
 
 vre::VreSwapchain::~VreSwapchain() {
@@ -109,6 +113,15 @@ VkResult vre::VreSwapchain::submitCommandBuffers(
 	return result;
 }
 
+void vre::VreSwapchain::init() {
+	createSwapchain();
+	createImageViews();
+	createRenderpass();
+	createDepthResources();
+	createFramebuffers();
+	createSyncObjects();
+}
+
 void vre::VreSwapchain::createSwapchain() {
 	SwapchainSupportDetails swapchainSupport = m_vreDevice.getSwapChainSupport();
 
@@ -151,7 +164,9 @@ void vre::VreSwapchain::createSwapchain() {
 
 	createInfo.presentMode = presentMode;
 	createInfo.clipped = VK_TRUE;
-	createInfo.oldSwapchain = VK_NULL_HANDLE;
+	createInfo.oldSwapchain = m_oldSwapchain == nullptr ? VK_NULL_HANDLE : m_oldSwapchain->m_swapchain;
+
+
 
 	if (vkCreateSwapchainKHR(m_vreDevice.device(), &createInfo, nullptr, &m_swapchain) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create swapchain!");

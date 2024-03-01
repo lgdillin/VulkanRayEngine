@@ -46,6 +46,7 @@ private:
 	void createPipelineLayout();
 	void createPipeline();
 	void createCommandBuffers();
+	void freeCommandBuffers();
 	void drawFrame();
 	void recreateSwapchain();
 	void recordCommandBuffer(int _imageIndex);

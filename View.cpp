@@ -35,10 +35,13 @@ void View::createPipelineLayout() {
 }
 
 void View::createPipeline() {
-	auto pipelineConfig = vre::VrePipeline::defaultPipelineConfigInfo(
-		m_vreSwapchain->width(), m_vreSwapchain->height());
+	vre::PipelineConfigInfo pipelineConfig{};
+	vre::VrePipeline::defaultPipelineConfigInfo(pipelineConfig);
+	//auto pipelineConfig = vre::VrePipeline::defaultPipelineConfigInfo(
+	//	m_vreSwapchain->width(), m_vreSwapchain->height());
 	pipelineConfig.renderPass = m_vreSwapchain->getRenderPass();
 	pipelineConfig.pipelineLayout = m_pipelineLayout;
+	
 	m_vrePipeline = std::make_unique<vre::VrePipeline>(
 		m_vreDevice.m_device, pipelineConfig, "./triangle.vert.spv", "./triangle.frag.spv");
 }
@@ -63,50 +66,6 @@ void View::createCommandBuffers() {
 	if (vkAllocateCommandBuffers(m_vreDevice.m_device, &allocInfo, m_commandBuffers.data()) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to allocate command buffers");
 	}
-
-	//
-	//
-	// For now, we are doing a 1:1 relationship for commandBuffer:Renderpass
-	/*
-	for (int i = 0; i < m_commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		if (vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-			throw std::runtime_error("failed to begin recording command buffer");
-		}
-
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = m_vreSwapchain->getRenderPass();
-		renderPassInfo.framebuffer = m_vreSwapchain->getFramebuffer(i);
-
-		renderPassInfo.renderArea.offset = { 0,0 };
-		renderPassInfo.renderArea.extent = m_vreSwapchain->getSwapchainExtent();
-
-		std::array<VkClearValue, 2> clearValues{};
-		clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
-		// clearValues[0].depthStencil = ?  // this value would be ignored because of how we have our vertex buffer laid out
-		clearValues[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		renderPassInfo.pClearValues = clearValues.data();
-
-		// VK_SUBPASS_CONTENTS_INLINE signals that the subsequent render pass commands will be directly embedded in the 
-		// primary command buffer itself, and that no secondary cmd buffers will be used
-		// VK_SUBPASS_CONTENTS_SECONDARY means that render pass command will be exeucted by secondary command buffer, no render pass can use inline/secondary command buffers
-		vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		m_vrePipeline->bind(m_commandBuffers[i]);
-		//vkCmdDraw(m_commandBuffers[i], 3, 1, 0, 0);
-		m_model->bind(m_commandBuffers[i]);
-		m_model->draw(m_commandBuffers[i]);
-
-		vkCmdEndRenderPass(m_commandBuffers[i]);
-
-		if (vkEndCommandBuffer(m_commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to record command buffer");
-		}
-	}*/
 
 }
 
@@ -140,6 +99,12 @@ void View::drawFrame() {
 	}
 }
 
+void View::freeCommandBuffers() {
+	vkFreeCommandBuffers(m_vreDevice.m_device, m_vreDevice.getCommandPool(),
+		static_cast<float>(m_commandBuffers.size()), m_commandBuffers.data());
+	m_commandBuffers.clear();
+}
+
 void View::recreateSwapchain() {
 	auto extent = m_vreWindow.getExtent();
 	int w = 0;
@@ -149,7 +114,19 @@ void View::recreateSwapchain() {
 	extent.height = h;
 
 	vkDeviceWaitIdle(m_vreDevice.m_device);
-	m_vreSwapchain = std::make_unique<vre::VreSwapchain>(m_vreDevice, extent);
+
+	if (m_vreSwapchain == nullptr) {
+		m_vreSwapchain = std::make_unique<vre::VreSwapchain>(m_vreDevice, extent);
+	} else {
+		m_vreSwapchain = std::make_unique<vre::VreSwapchain>
+			(m_vreDevice, extent, std::move(m_vreSwapchain));
+		if (m_vreSwapchain->imageCount() != m_commandBuffers.size()) {
+			freeCommandBuffers();
+			createCommandBuffers();
+		}
+	}
+
+	// if renderpass compatible do nothing else
 	createPipeline();
 
 }
@@ -181,6 +158,17 @@ void View::recordCommandBuffer(int _imageIndex) {
 	// primary command buffer itself, and that no secondary cmd buffers will be used
 	// VK_SUBPASS_CONTENTS_SECONDARY means that render pass command will be exeucted by secondary command buffer, no render pass can use inline/secondary command buffers
 	vkCmdBeginRenderPass(m_commandBuffers[_imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = static_cast<float>(m_vreSwapchain->getSwapchainExtent().width);
+	viewport.height = static_cast<float>(m_vreSwapchain->getSwapchainExtent().height);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	VkRect2D scissor{ {0, 0}, m_vreSwapchain->getSwapchainExtent() };
+	vkCmdSetViewport(m_commandBuffers[_imageIndex], 0, 1, &viewport);
+	vkCmdSetScissor(m_commandBuffers[_imageIndex], 0, 1, &scissor);
 
 	m_vrePipeline->bind(m_commandBuffers[_imageIndex]);
 	//vkCmdDraw(m_commandBuffers[i], 3, 1, 0, 0);

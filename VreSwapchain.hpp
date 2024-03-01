@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include <vulkan/vulkan.h>
 
@@ -13,6 +14,8 @@ namespace vre {
 		static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 		VreSwapchain(VreDevice &_device, VkExtent2D _extent);
+		VreSwapchain(VreDevice &_device, VkExtent2D _extent, 
+			std::shared_ptr<VreSwapchain> _previous);
 		~VreSwapchain();
 
 		VkFramebuffer getFramebuffer(int _index) { return m_swapchainFramebuffers[_index]; }
@@ -32,6 +35,7 @@ namespace vre {
 		VkResult acquireNextImage(uint32_t *_imageIndex);
 		VkResult submitCommandBuffers(const VkCommandBuffer *_buffers, uint32_t *_imageIndex);
 	private:
+		void init();
 		void createSwapchain();
 		void createImageViews();
 		void createDepthResources();
@@ -51,6 +55,7 @@ namespace vre {
 		VkExtent2D m_windowExtent;
 
 		VkSwapchainKHR m_swapchain;
+		std::shared_ptr<VreSwapchain> m_oldSwapchain;
 
 		VkFormat m_swapchainImageFormat;
 		VkExtent2D m_swapchainExtent;

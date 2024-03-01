@@ -25,88 +25,99 @@ void vre::VrePipeline::bind(VkCommandBuffer _commandBuffer) {
     vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
 }
 
-vre::PipelineConfigInfo vre::VrePipeline::defaultPipelineConfigInfo(
-    uint32_t _width, uint32_t _height
-) {
-    vre::PipelineConfigInfo info{};
-    info.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+
+
+void vre::VrePipeline::defaultPipelineConfigInfo(PipelineConfigInfo &_configInfo) {
+    //vre::PipelineConfigInfo info{};
+    _configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     // every 3 vertices are grouped with this flag
-    info.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    _configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     // break up a triangle strip using a special index value (if true)
-    info.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
+    _configInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 
-    // viewport describes the transformation between our output and the target image
-    info.viewport.x = 0.0f;
-    info.viewport.y = 0.0f;
-    info.viewport.width = static_cast<float>(_width);
-    // example: if we multiply this by 0.5, the output image will be squished 
-    // into the top half of the screen
-    info.viewport.height = static_cast<float>(_height);
-    info.viewport.minDepth = 0.0f;
-    info.viewport.maxDepth = 1.0f;
+    //// viewport describes the transformation between our output and the target image
+    //info.viewport.x = 0.0f;
+    //info.viewport.y = 0.0f;
+    //info.viewport.width = static_cast<float>(_width);
+    //// example: if we multiply this by 0.5, the output image will be squished 
+    //// into the top half of the screen
+    //info.viewport.height = static_cast<float>(_height);
+    //info.viewport.minDepth = 0.0f;
+    //info.viewport.maxDepth = 1.0f;
 
-    // like viewport, but cuts instead of squishes
-    // so if we multiply by 0.5, only the top half of the screen will be drawn
-    info.scissor.offset = { 0, 0 };
-    info.scissor.extent = { _width, _height };
+    //// like viewport, but cuts instead of squishes
+    //// so if we multiply by 0.5, only the top half of the screen will be drawn
+    //info.scissor.offset = { 0, 0 };
+    //info.scissor.extent = { _width, _height };
 
-    info.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    _configInfo.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    _configInfo.viewportInfo.viewportCount = 1;
+    _configInfo.viewportInfo.pViewports = nullptr;
+    _configInfo.viewportInfo.scissorCount = 1;
+    _configInfo.viewportInfo.pScissors = nullptr;
+
+    _configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     // forces the z component of gl_position to be 0 <= z <= 1
-    info.rasterizationInfo.depthClampEnable = VK_FALSE;
+    _configInfo.rasterizationInfo.depthClampEnable = VK_FALSE;
     // discards all primitive before rasterization, so you only use this 
     // in situations where you only want to use the first few stages of the 
     // graphicps pipeline
-    info.rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
+    _configInfo.rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
     // draw corners, edges, or the whole triangle filled in?
-    info.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
-    info.rasterizationInfo.lineWidth = 1.0f;
-    info.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
-    info.rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    info.rasterizationInfo.depthBiasEnable = VK_FALSE;
-    info.rasterizationInfo.depthBiasConstantFactor = 0.0f; // optional
-    info.rasterizationInfo.depthBiasClamp = 0.0f; // optional
-    info.rasterizationInfo.depthBiasSlopeFactor = 0.0f; // optional
+    _configInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
+    _configInfo.rasterizationInfo.lineWidth = 1.0f;
+    _configInfo.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
+    _configInfo.rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    _configInfo.rasterizationInfo.depthBiasEnable = VK_FALSE;
+    _configInfo.rasterizationInfo.depthBiasConstantFactor = 0.0f; // optional
+    _configInfo.rasterizationInfo.depthBiasClamp = 0.0f; // optional
+    _configInfo.rasterizationInfo.depthBiasSlopeFactor = 0.0f; // optional
 
-    info.multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    info.multisampleInfo.sampleShadingEnable = VK_FALSE;
-    info.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    info.multisampleInfo.minSampleShading = 1.0f; // optional
-    info.multisampleInfo.pSampleMask = nullptr; // optional
-    info.multisampleInfo.alphaToCoverageEnable = VK_FALSE; // optional
-    info.multisampleInfo.alphaToOneEnable = VK_FALSE; // optional
+    _configInfo.multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    _configInfo.multisampleInfo.sampleShadingEnable = VK_FALSE;
+    _configInfo.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    _configInfo.multisampleInfo.minSampleShading = 1.0f; // optional
+    _configInfo.multisampleInfo.pSampleMask = nullptr; // optional
+    _configInfo.multisampleInfo.alphaToCoverageEnable = VK_FALSE; // optional
+    _configInfo.multisampleInfo.alphaToOneEnable = VK_FALSE; // optional
 
-    info.colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+    _configInfo.colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
         | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    info.colorBlendAttachment.blendEnable = VK_FALSE;
-    info.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // optional
-    info.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // optional
-    info.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;             // optional
-    info.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // optional
-    info.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // optional
-    info.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // optional
+    _configInfo.colorBlendAttachment.blendEnable = VK_FALSE;
+    _configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // optional
+    _configInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // optional
+    _configInfo.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;             // optional
+    _configInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // optional
+    _configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // optional
+    _configInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // optional
 
-    info.colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    info.colorBlendInfo.logicOpEnable = VK_FALSE;
-    info.colorBlendInfo.logicOp = VK_LOGIC_OP_COPY; // optional
-    info.colorBlendInfo.attachmentCount = 1;
-    info.colorBlendInfo.pAttachments = &info.colorBlendAttachment;
-    info.colorBlendInfo.blendConstants[0] = 0.0f; // optional
-    info.colorBlendInfo.blendConstants[1] = 0.0f; // optional
-    info.colorBlendInfo.blendConstants[2] = 0.0f; // optional
-    info.colorBlendInfo.blendConstants[3] = 0.0f; // optional
+    _configInfo.colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    _configInfo.colorBlendInfo.logicOpEnable = VK_FALSE;
+    _configInfo.colorBlendInfo.logicOp = VK_LOGIC_OP_COPY; // optional
+    _configInfo.colorBlendInfo.attachmentCount = 1;
+    _configInfo.colorBlendInfo.pAttachments = &_configInfo.colorBlendAttachment;
+    _configInfo.colorBlendInfo.blendConstants[0] = 0.0f; // optional
+    _configInfo.colorBlendInfo.blendConstants[1] = 0.0f; // optional
+    _configInfo.colorBlendInfo.blendConstants[2] = 0.0f; // optional
+    _configInfo.colorBlendInfo.blendConstants[3] = 0.0f; // optional
 
-    info.depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    info.depthStencilInfo.depthTestEnable = VK_TRUE;
-    info.depthStencilInfo.depthWriteEnable = VK_TRUE;
-    info.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-    info.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    info.depthStencilInfo.minDepthBounds = 0.0f; //optional
-    info.depthStencilInfo.maxDepthBounds = 1.0f; // optional
-    info.depthStencilInfo.stencilTestEnable = VK_FALSE;
-    info.depthStencilInfo.front = {}; // optional
-    info.depthStencilInfo.back = {}; // optional
+    _configInfo.depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    _configInfo.depthStencilInfo.depthTestEnable = VK_TRUE;
+    _configInfo.depthStencilInfo.depthWriteEnable = VK_TRUE;
+    _configInfo.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+    _configInfo.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
+    _configInfo.depthStencilInfo.minDepthBounds = 0.0f; //optional
+    _configInfo.depthStencilInfo.maxDepthBounds = 1.0f; // optional
+    _configInfo.depthStencilInfo.stencilTestEnable = VK_FALSE;
+    _configInfo.depthStencilInfo.front = {}; // optional
+    _configInfo.depthStencilInfo.back = {}; // optional
 
-    return info;
+    _configInfo.dynamicStateEnables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    _configInfo.dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    _configInfo.dynamicStateInfo.pDynamicStates = _configInfo.dynamicStateEnables.data();
+    _configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(_configInfo.dynamicStateEnables.size());
+    _configInfo.dynamicStateInfo.flags = 0;
+
 }
 
 void vre::VrePipeline::createGraphicsPipeline(
@@ -155,12 +166,12 @@ void vre::VrePipeline::createGraphicsPipeline(
     vertexInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
     vertexInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 
-    VkPipelineViewportStateCreateInfo viewportInfo{};
-    viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportInfo.viewportCount = 1;
-    viewportInfo.pViewports = &_info.viewport;
-    viewportInfo.scissorCount = 1;
-    viewportInfo.pScissors = &_info.scissor;
+    //VkPipelineViewportStateCreateInfo viewportInfo{};
+    //viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    //viewportInfo.viewportCount = 1;
+    //viewportInfo.pViewports = &_info.viewport;
+    //viewportInfo.scissorCount = 1;
+    //viewportInfo.pScissors = &_info.scissor;
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -168,12 +179,12 @@ void vre::VrePipeline::createGraphicsPipeline(
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.pVertexInputState = &vertexInfo;
     pipelineInfo.pInputAssemblyState = &_info.inputAssemblyInfo;
-    pipelineInfo.pViewportState = &viewportInfo;
+    pipelineInfo.pViewportState = &_info.viewportInfo;
     pipelineInfo.pRasterizationState = &_info.rasterizationInfo;
     pipelineInfo.pMultisampleState = &_info.multisampleInfo;
     pipelineInfo.pColorBlendState = &_info.colorBlendInfo;
     pipelineInfo.pDepthStencilState = &_info.depthStencilInfo;
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = &_info.dynamicStateInfo;
 
     pipelineInfo.layout = _info.pipelineLayout;
     pipelineInfo.renderPass = _info.renderPass;
