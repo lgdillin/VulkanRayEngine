@@ -14,7 +14,7 @@ vre::VrePipeline::VrePipeline(
 
 vre::VrePipeline::~VrePipeline() {
     vkDestroyShaderModule(m_device, m_vShader, nullptr);
-    vkDestroyShaderModule(m_device, m_vShader, nullptr);
+    vkDestroyShaderModule(m_device, m_fShader, nullptr);
     vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
 }
 

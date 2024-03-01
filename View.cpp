@@ -3,7 +3,7 @@
 View::View(Game &_game) : m_game(&_game) {
 	loadModel();
 	createPipelineLayout();
-	createPipeline();
+	recreateSwapchain();
 	createCommandBuffers();
 }
 
@@ -115,12 +115,26 @@ void View::drawFrame() {
 	// fetches the index of the frame we should render to next
 	// also handles cpu/gpu sync for double/triple buff
 	auto result = m_vreSwapchain->acquireNextImage(&imageIndex);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		recreateSwapchain();
+		return;
+	}
+
 	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 		throw std::runtime_error("failed to acquire swapchain image");
 	}
 
 	// submit command buffer to device graphics queue while handling cpu/gpu sync
+	recordCommandBuffer(imageIndex);
 	result = m_vreSwapchain->submitCommandBuffers(&m_commandBuffers[imageIndex], &imageIndex);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR
+		|| m_vreWindow.wasWindowResized()) {
+		m_vreWindow.resetWindowResizedFlag();
+		recreateSwapchain();
+		return;
+	}
+	
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to present swap chain image");
 	}
@@ -128,13 +142,14 @@ void View::drawFrame() {
 
 void View::recreateSwapchain() {
 	auto extent = m_vreWindow.getExtent();
-	while (extent.width == 0 || extent.height == 0) {
-		extent = m_vreWindow.getExtent();
-		// glfwWaitEvents()
-	}
+	int w = 0;
+	int h = 0;
+	SDL_GetWindowSize(m_vreWindow.m_window, &w, &h);
+	extent.width = w;
+	extent.height = h;
 
 	vkDeviceWaitIdle(m_vreDevice.m_device);
-	m_vreSwapchain = std::make_unique<vre::VreSwapchain>(m_vreDevice.m_device, extent);
+	m_vreSwapchain = std::make_unique<vre::VreSwapchain>(m_vreDevice, extent);
 	createPipeline();
 
 }
