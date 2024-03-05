@@ -1,5 +1,17 @@
 #include "View.hpp"
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE // forces depth to [0,1] instead of [-1,1]
+#include <glm/glm.hpp>
+
+namespace vre {
+	struct SimplePushConstantData {
+		glm::vec2 offset;
+		alignas(16) glm::vec3 color;
+	};
+}
+
+
 View::View(Game &_game) : m_game(&_game) {
 	loadModel();
 	createPipelineLayout();
@@ -19,14 +31,22 @@ void View::update() {
 }
 
 void View::createPipelineLayout() {
+	VkPushConstantRange pushConstantRange{};
+	// this signal that we want access to the push constant data in both
+	// the vertex and fragment shaders
+	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT
+		| VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantRange.offset = 0; // if we are using diff ranges for v/f shaders
+	pushConstantRange.size = sizeof(vre::SimplePushConstantData);
+
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 0;
 	pipelineLayoutInfo.pSetLayouts = nullptr;
 	// push constants are an effecient way of sending
 	// a very small amount of data to our shader program
-	pipelineLayoutInfo.pushConstantRangeCount = 0;
-	pipelineLayoutInfo.pPushConstantRanges = nullptr;
+	pipelineLayoutInfo.pushConstantRangeCount = 1; // simple push constant
+	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
 	if (vkCreatePipelineLayout(m_vreDevice.device(), &pipelineLayoutInfo,
 		nullptr, &m_pipelineLayout) != VK_SUCCESS) {
@@ -132,6 +152,9 @@ void View::recreateSwapchain() {
 }
 
 void View::recordCommandBuffer(int _imageIndex) {
+	static int frame = 0;
+	frame = (frame + 1) % 1000;
+
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -173,7 +196,21 @@ void View::recordCommandBuffer(int _imageIndex) {
 	m_vrePipeline->bind(m_commandBuffers[_imageIndex]);
 	//vkCmdDraw(m_commandBuffers[i], 3, 1, 0, 0);
 	m_model->bind(m_commandBuffers[_imageIndex]);
-	m_model->draw(m_commandBuffers[_imageIndex]);
+
+	// Playing with push constants
+	for (int j = 0; j < 4; j++) {
+		vre::SimplePushConstantData push{};
+		push.offset = { -0.5f + frame * 0.002f, -0.4f + j * 0.25f };
+		push.color = { 0.0f, 0.0f, 0.2f + 0.2f * j };
+
+		vkCmdPushConstants(m_commandBuffers[_imageIndex], m_pipelineLayout,
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			0, sizeof(vre::SimplePushConstantData), &push);
+		m_model->draw(m_commandBuffers[_imageIndex]);
+		// don't forget to update shader files to expect push constants!
+	}
+
+	//m_model->draw(m_commandBuffers[_imageIndex]);
 
 	vkCmdEndRenderPass(m_commandBuffers[_imageIndex]);
 
